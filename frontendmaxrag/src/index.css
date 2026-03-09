@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-background text-primary overflow-x-hidden overflow-y-hidden;
+  }
+}
+
+body,
+a,
+button,
+div {
+  cursor: url(./assets/cursor.svg) 2 2, auto;
+}
+
+@theme {
+  --color-background: rgb(22, 22, 24);
+  --color-secondary: rgb(37, 38, 40);
+  --color-primary: rgb(252, 252, 252);
+}
+
+@layer components {
+  .btn {
+    @apply inline-block rounded bg-primary px-6 py-2 text-background transition hover:opacity-80;
+  }
+}
