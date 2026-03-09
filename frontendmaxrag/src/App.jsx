@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './pages/Sidebar.jsx';
 import Chat from './pages/Chat.jsx';
-// import MainContent from './pages/MainContent.jsx';
 import './index.css';
 
 export default function App() {
