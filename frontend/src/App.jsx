@@ -1,16 +1,24 @@
-import LeftPane from './components/LeftPane'
-import ChatArea from './components/ChatArea'
-import RightPane from './components/RightPane'
-import './index.css'
+import { useState, useEffect } from 'react';
+import Sidebar from './pages/Sidebar.jsx';
+import Chat from './pages/Chat.jsx';
+import './index.css';
 
-function App() {
+export default function App() {
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('isSidebarOpen');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => { localStorage.setItem('isSidebarOpen', JSON.stringify(isSidebarOpen)); }, [isSidebarOpen]);
+
   return (
-    <div className="flex h-screen w-screen bg-slate-950 p-3 gap-3 font-mono overflow-hidden">
-      <LeftPane />
-      <ChatArea />
-      <RightPane />
+    <div className="app-container relative flex h-screen">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        toggleSidebar={() => setIsSidebarOpen(o => !o)}
+      />
+      <Chat />
     </div>
-  )
+  );
 }
-
-export default App
