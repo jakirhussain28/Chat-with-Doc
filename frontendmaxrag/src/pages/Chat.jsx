@@ -1,59 +1,62 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { IoSend } from 'react-icons/io5';
-import { HiOutlineChatAlt2 } from 'react-icons/hi';
+import { CiChat1 } from "react-icons/ci";
 import HistorySidebar from './Settings.jsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation } from '../api/chat';
+import llmConfig from '../config/llm_config.json';
 
 // ─── ChatBubble ────────────────────────────────────────────────────────────────
 
 function ChatBubble({ role, content, isTyping }) {
     const isUser = role === 'user';
-    return (
-        <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start mb-2 group'}`}>
-            {!isUser && (
-                <div className="flex-shrink-0 mr-3 mt-1 opacity-90 group-hover:opacity-100 transition-opacity">
-                    <div className="w-8 h-8 rounded-full bg-blue-600/10 flex items-center justify-center border border-blue-500/30 text-blue-400 shadow-[0_0_12px_rgba(37,99,235,0.15)] backdrop-blur-sm">
-                        <HiOutlineChatAlt2 className={`w-5 h-5 ${isTyping ? 'animate-pulse' : ''}`} />
-                    </div>
+
+    if (isTyping) {
+        return (
+            <div className="flex gap-3 justify-start">
+                <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm px-4 py-3 flex gap-1.5 items-center h-[44px]">
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '160ms' }}></span>
+                    <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '320ms' }}></span>
                 </div>
-            )}
-            <div className={`py-3 px-4.5 rounded-2xl max-w-[85%] sm:max-w-[75%] text-[15px] leading-relaxed shadow-sm ${isUser
-                ? 'bg-blue-600/90 text-white rounded-br-sm'
-                : 'bg-[#1a1a1f] text-gray-200 rounded-tl-sm border border-gray-700/40'
-                } ${isTyping ? 'h-[48px] flex items-center' : ''}`}>
-                {isTyping ? (
-                    <div className="flex gap-1.5 items-center">
-                        <span className="w-1.5 h-1.5 bg-blue-400/80 rounded-full animate-bounce [animation-delay:0ms]" />
-                        <span className="w-1.5 h-1.5 bg-blue-400/80 rounded-full animate-bounce [animation-delay:150ms]" />
-                        <span className="w-1.5 h-1.5 bg-blue-400/80 rounded-full animate-bounce [animation-delay:300ms]" />
-                    </div>
-                ) : isUser ? (
+            </div>
+        );
+    }
+
+    return (
+        <div className={`flex gap-3 w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm
+                ${isUser
+                    ? 'bg-cyan-600/50 text-white rounded-tr-sm'
+                    : 'bg-[#1a1a1f] text-gray-200 border border-gray-700/40 rounded-tl-sm'
+                }`}
+            >
+                {isUser ? (
                     <div className="whitespace-pre-wrap">{content}</div>
                 ) : (
                     <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
-                            ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3 space-y-1.5 text-gray-300" {...props} />,
-                            ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3 space-y-1.5 text-gray-300" {...props} />,
+                            ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-3 space-y-1.5 text-slate-300" {...props} />,
+                            ol: ({ node, ...props }) => <ol className="list-decimal pl-5 mb-3 space-y-1.5 text-slate-300" {...props} />,
                             li: ({ node, ...props }) => <li className="leading-relaxed" {...props} />,
-                            p: ({ node, ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-gray-200" {...props} />,
+                            p: ({ node, ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-slate-200" {...props} />,
                             a: ({ node, ...props }) => <a className="text-blue-400 hover:text-blue-300 underline underline-offset-4 decoration-blue-500/30 hover:decoration-blue-400 transition-all font-medium" {...props} />,
                             code: ({ node, inline, ...props }) =>
                                 inline
-                                    ? <code className="bg-[#2a2a32] text-blue-300 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-gray-700/50 font-medium" {...props} />
-                                    : <div className="relative my-4"><div className="absolute top-0 left-0 w-full h-8 bg-[#1e1e24] rounded-t-xl border-b border-gray-700/50 flex items-center px-4"><span className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div><div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div><div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div></span></div><pre className="bg-[#111114] pt-10 pb-4 px-4 rounded-xl text-[13px] font-mono overflow-x-auto border border-gray-700/50 text-gray-300 shadow-inner"><code className="whitespace-pre" {...props} /></pre></div>,
+                                    ? <code className="bg-slate-700 text-blue-300 px-1.5 py-0.5 rounded-md text-[13px] font-mono border border-slate-600 font-medium" {...props} />
+                                    : <div className="relative my-4"><div className="absolute top-0 left-0 w-full h-8 bg-slate-800 rounded-t-xl border-b border-slate-700 flex items-center px-4"><span className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div><div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div><div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div></span></div><pre className="bg-slate-900 pt-10 pb-4 px-4 rounded-xl text-[13px] font-mono overflow-x-auto border border-slate-700 text-slate-300 shadow-inner"><code className="whitespace-pre" {...props} /></pre></div>,
                             h1: ({ node, ...props }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-white tracking-tight" {...props} />,
                             h2: ({ node, ...props }) => <h2 className="text-xl font-bold mb-3 mt-5 text-white tracking-tight" {...props} />,
                             h3: ({ node, ...props }) => <h3 className="text-lg font-bold mb-3 mt-4 text-white tracking-tight" {...props} />,
                             strong: ({ node, ...props }) => <strong className="font-semibold text-white" {...props} />,
-                            table: ({ node, ...props }) => <div className="overflow-x-auto my-4 rounded-lg border border-gray-700/50 shadow-sm"><table className="w-full text-left border-collapse text-sm" {...props} /></div>,
-                            thead: ({ node, ...props }) => <thead className="bg-[#24242a] text-gray-300" {...props} />,
-                            th: ({ node, ...props }) => <th className="border-b border-gray-700 py-3 px-4 font-semibold" {...props} />,
-                            td: ({ node, ...props }) => <td className="border-b border-gray-800/50 py-3 px-4 text-gray-300" {...props} />,
-                            tr: ({ node, ...props }) => <tr className="hover:bg-[#1e1e24] transition-colors" {...props} />,
-                            blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-blue-500/50 pl-4 py-1 my-4 text-gray-400 bg-blue-500/5 rounded-r-xl italic" {...props} />
+                            table: ({ node, ...props }) => <div className="overflow-x-auto my-4 rounded-lg border border-slate-700 shadow-sm"><table className="w-full text-left border-collapse text-sm" {...props} /></div>,
+                            thead: ({ node, ...props }) => <thead className="bg-slate-800 text-slate-300" {...props} />,
+                            th: ({ node, ...props }) => <th className="border-b border-slate-700 py-3 px-4 font-semibold" {...props} />,
+                            td: ({ node, ...props }) => <td className="border-b border-slate-700/50 py-3 px-4 text-slate-300" {...props} />,
+                            tr: ({ node, ...props }) => <tr className="hover:bg-slate-800/50 transition-colors" {...props} />,
+                            blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-blue-500/50 pl-4 py-1 my-4 text-slate-400 bg-blue-500/5 rounded-r-xl italic" {...props} />
                         }}
                     >
                         {content}
@@ -63,7 +66,6 @@ function ChatBubble({ role, content, isTyping }) {
         </div>
     );
 }
-
 
 
 // ─── ChatMAX ───────────────────────────────────────────────────────────────────
@@ -76,10 +78,21 @@ export default function ChatMAX() {
     const [activeConvId, setActiveConvId] = useState(null);
     const [historyOpen, setHistoryOpen] = useState(true);
 
+    const [genLLM, setGenLLM] = useState('');
+    const [embedLLM, setEmbedLLM] = useState('');
+    const [uploadedFile, setUploadedFile] = useState(null);
+
     const chatEndRef = useRef(null);
     const textareaRef = useRef(null);
 
     const [placeholder] = useState("Ask a question about your documents");
+
+    const handleFileClick = () => document.getElementById('chat-file-input')?.click();
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setUploadedFile(e.target.files[0].name);
+        }
+    };
 
     // Scroll to bottom
     useEffect(() => {
@@ -221,9 +234,65 @@ export default function ChatMAX() {
                 <div className="flex-1 overflow-y-auto">
                     {!isChatStarted ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
-                            <HiOutlineChatAlt2 className="w-12 h-12 text-gray-600" />
-                            <h1 className="text-3xl font-bold text-primary">ChatDOX</h1>
+                            <h1 className="text-3xl font-bold text-gray-300">ChatDOX</h1>
                             <p className="text-gray-500 text-sm">Your RAG assistant.</p>
+
+                            {/* Action Buttons */}
+                            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-6">
+                                <div className="flex flex-col gap-4">
+                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group">
+                                        <span className="text-gray-400 font-thin text-base tracking-wide group-hover:text-gray-300 transition-colors">
+                                            {genLLM || 'Generation LLM'}
+                                        </span>
+                                        <select
+                                            value={genLLM}
+                                            onChange={e => setGenLLM(e.target.value)}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        >
+                                            <option value="" disabled>Generation LLM</option>
+                                            {llmConfig.generation_llms.map(m => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group">
+                                        <span className="text-gray-400 font-thin text-base tracking-wide group-hover:text-gray-300 transition-colors">
+                                            {embedLLM || 'Embedding LLM'}
+                                        </span>
+                                        <select
+                                            value={embedLLM}
+                                            onChange={e => setEmbedLLM(e.target.value)}
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        >
+                                            <option value="" disabled>Embedding LLM</option>
+                                            {llmConfig.embedding_llms.map(m => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="h-full">
+                                    <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.csv" />
+                                    <div
+                                        onClick={handleFileClick}
+                                        className="relative w-full h-full bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex flex-col p-6 border border-gray-700/50 transition-colors cursor-pointer group shadow-sm"
+                                    >
+                                        <div className="flex gap-4 items-start">
+                                            <CiChat1 className="w-8 h-8 text-gray-500 -mt-0.5" />
+                                            <span className="text-gray-400 font-medium text-lg leading-snug group-hover:text-gray-300 transition-colors">
+                                                Start New Chat
+                                            </span>
+                                        </div>
+                                        <div className="absolute bottom-6 left-0 right-0 text-center">
+                                            <span className="text-sm text-gray-500 font-thin tracking-wide">
+                                                {uploadedFile || 'Upload PDF, Doc, Text, CSV'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="max-w-3xl mx-auto w-full px-4 py-6 space-y-4">

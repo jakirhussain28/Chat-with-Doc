@@ -26,14 +26,14 @@ export default function Sidebar({ isOpen, toggleSidebar, conversations = [], act
             <LuHistory className="w-5 h-5 text-gray-400" />
           </div>
 
-          {/* New Chat pill button */}
+          {/* New Thread pill button */}
           <div className={`flex items-center justify-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={onNewChat}
               className="flex items-center gap-2 px-5 py-2 rounded-full bg-[rgba(30,30,32,0.8)] border border-gray-700/60 text-primary text-sm font-medium hover:bg-[rgba(40,40,44,0.9)] transition-colors whitespace-nowrap"
             >
               <IoAdd className="w-4 h-4 flex-shrink-0" />
-              New Chat
+              New Thread
             </button>
           </div>
 

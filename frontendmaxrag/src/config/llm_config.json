@@ -1,0 +1,12 @@
+{
+  "generation_llms": [
+    "Qwen3:4b-Instruct",
+    "gemma3:4b",
+    "moonshotai/kimi-k2-instruct-0905"
+  ],
+  "embedding_llms": [
+    "qwen3-embedding:0.6b",
+    "embeddinggemma:300m",
+    "nomic-embed-text-v2-moe"
+  ]
+}
