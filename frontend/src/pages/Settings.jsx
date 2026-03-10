@@ -80,7 +80,7 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
 
                     {/* Generation Params */}
                     <div>
-                        <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-5 font-mono">GENERATION PARAMS</label>
+                        <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-5 font-mono">GENERATION PARAMETERS</label>
 
                         {/* Temperature */}
                         <div className="mb-6 relative">
