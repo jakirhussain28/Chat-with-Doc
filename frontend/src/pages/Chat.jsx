@@ -85,12 +85,13 @@ export default function ChatMAX() {
     const chatEndRef = useRef(null);
     const textareaRef = useRef(null);
 
-    const [placeholder] = useState("Ask a question about your documents");
+    const [placeholder] = useState("Ask questions about your document");
 
     const handleFileClick = () => document.getElementById('chat-file-input')?.click();
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             setUploadedFile(e.target.files[0].name);
+            setHistoryOpen(true);
         }
     };
 
@@ -340,6 +341,7 @@ export default function ChatMAX() {
                 onNewChat={handleNewChat}
                 isOpen={historyOpen}
                 onToggle={() => setHistoryOpen(o => !o)}
+                uploadedFile={uploadedFile}
             />
         </div>
     );

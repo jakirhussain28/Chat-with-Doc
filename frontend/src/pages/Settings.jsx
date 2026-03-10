@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 import { VscSettings } from "react-icons/vsc";
 
-export default function HistorySidebar({ conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle }) {
+export default function HistorySidebar({ conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile }) {
     const [chunkSize, setChunkSize] = useState('');
     const [chunkOverlap, setChunkOverlap] = useState('');
     const [systemPrompt, setSystemPrompt] = useState('');
@@ -26,7 +26,12 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
 
                 {/* Uploaded file name */}
                 <div className={`flex items-center justify-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <span className="px-4 py-3 text-center text-gray-500 text-xs whitespace-nowrap">No File Uploaded</span>
+                    <span
+                        className="px-4 py-3 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full"
+                        onClick={() => document.getElementById('chat-file-input')?.click()}
+                    >
+                        {uploadedFile || 'No File Uploaded'}
+                    </span>
                 </div>
 
                 {/* Divider */}
