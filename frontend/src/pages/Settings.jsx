@@ -3,8 +3,8 @@ import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 import { VscSettings } from "react-icons/vsc";
 
 export default function HistorySidebar({ conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile }) {
-    const [chunkSize, setChunkSize] = useState('');
-    const [chunkOverlap, setChunkOverlap] = useState('');
+    const [chunkSize, setChunkSize] = useState(512);
+    const [chunkOverlap, setChunkOverlap] = useState(50);
     const [systemPrompt, setSystemPrompt] = useState('');
     const [temperature, setTemperature] = useState(1.0);
     const [topK, setTopK] = useState(5);
@@ -93,8 +93,8 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                                 min="0" max="1" step="0.1"
                                 value={temperature}
                                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                                className="w-full h-1 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #3b82f6 ${(temperature / 1) * 100}%, #2a303f ${(temperature / 1) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
+                                style={{ background: `linear-gradient(to right, #7698ceff ${(temperature / 1) * 100}%, #2a303f ${(temperature / 1) * 100}%)` }}
                             />
                         </div>
 
@@ -109,8 +109,8 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                                 min="0" max="20" step="1"
                                 value={topK}
                                 onChange={(e) => setTopK(parseInt(e.target.value))}
-                                className="w-full h-1 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #3b82f6 ${(topK / 20) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
+                                style={{ background: `linear-gradient(to right, #7698ceff ${(topK / 20) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
                             />
                         </div>
 
@@ -125,8 +125,8 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                                 min="0" max="1" step="0.1"
                                 value={topP}
                                 onChange={(e) => setTopP(parseFloat(e.target.value))}
-                                className="w-full h-1 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #3b82f6 ${(topP / 1) * 100}%, #2a303f ${(topP / 1) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
+                                style={{ background: `linear-gradient(to right, #7698ceff ${(topP / 1) * 100}%, #2a303f ${(topP / 1) * 100}%)` }}
                             />
                         </div>
 

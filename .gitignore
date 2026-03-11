@@ -1,5 +1,7 @@
 check.jsx
-
+backend/venv
+backend/__pycache__
+.DS_Store
 # Logs
 logs
 *.log

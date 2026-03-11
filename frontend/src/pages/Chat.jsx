@@ -20,6 +20,9 @@ export default function ChatMAX() {
     const [genLLM, setGenLLM] = useState('');
     const [embedLLM, setEmbedLLM] = useState('');
     const [uploadedFile, setUploadedFile] = useState(null);
+    
+    // State to control the top-middle caution alert
+    const [showLlmAlert, setShowLlmAlert] = useState(false);
 
     const chatEndRef = useRef(null);
     const textareaRef = useRef(null);
@@ -93,6 +96,14 @@ export default function ChatMAX() {
         const trimmed = inputValue.trim();
         if (!trimmed || isStreaming) return;
 
+        // NEW: Show top-middle caution if Generation LLM is missing
+        if (!genLLM) {
+            setShowLlmAlert(true);
+            // Auto-hide the alert after 3 seconds
+            setTimeout(() => setShowLlmAlert(false), 3000);
+            return;
+        }
+
         const userMsg = { role: 'user', content: trimmed };
         setMessages(prev => [...prev, userMsg]);
         setInputValue('');
@@ -102,7 +113,7 @@ export default function ChatMAX() {
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
         try {
-            const response = await sendChatMessage(trimmed, 'default_user', activeConvId);
+            const response = await sendChatMessage(trimmed, 'default_user', activeConvId, genLLM);
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -167,7 +178,18 @@ export default function ChatMAX() {
     const isChatStarted = messages.length > 0;
 
     return (
-        <div className="flex h-full w-full overflow-hidden">
+        <div className="flex h-full w-full overflow-hidden relative">
+            
+            {/* NEW: Top-Middle Caution Alert */}
+            {showLlmAlert && (
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="font-medium text-sm tracking-wide">Please select a Generation LLM</span>
+                </div>
+            )}
+
             {/* Main Chat Area */}
             <div className="flex-1 flex flex-col h-full min-w-0">
                 {/* Messages */}
