@@ -43,6 +43,7 @@ class ChatRequest(BaseModel):
     user_id: str
     conversation_id: Optional[str] = None
     model: Optional[str] = "llama3:instruct"  # Default model if none provided
+    system_prompt: Optional[str] = None       # NEW: Added system_prompt field
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,10 @@ async def chat_endpoint(req: ChatRequest):
 
     # Prepare message history for Ollama context
     messages_history = conv.get("messages", []) + [user_msg]
+
+    # NEW: Inject the system prompt at the beginning of the context dynamically
+    if req.system_prompt and req.system_prompt.strip():
+        messages_history.insert(0, {"role": "system", "content": req.system_prompt.strip()})
 
     # 3. Stream from Local Ollama
     async def event_generator():

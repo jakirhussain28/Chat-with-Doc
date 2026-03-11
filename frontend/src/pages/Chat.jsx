@@ -6,7 +6,6 @@ import ChatBubble from './ChatBubble.jsx';
 import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation } from '../api/chat';
 import llmConfig from '../config/llm_config.json';
 
-
 // ─── ChatDOX ───────────────────────────────────────────────────────────────────
 
 export default function ChatMAX() {
@@ -20,6 +19,9 @@ export default function ChatMAX() {
     const [genLLM, setGenLLM] = useState('');
     const [embedLLM, setEmbedLLM] = useState('');
     const [uploadedFile, setUploadedFile] = useState(null);
+    
+    // NEW: default system prompt state
+    const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
     
     // State to control the top-middle caution alert
     const [showLlmAlert, setShowLlmAlert] = useState(false);
@@ -96,10 +98,9 @@ export default function ChatMAX() {
         const trimmed = inputValue.trim();
         if (!trimmed || isStreaming) return;
 
-        // NEW: Show top-middle caution if Generation LLM is missing
+        // Show top-middle caution if Generation LLM is missing
         if (!genLLM) {
             setShowLlmAlert(true);
-            // Auto-hide the alert after 3 seconds
             setTimeout(() => setShowLlmAlert(false), 3000);
             return;
         }
@@ -113,7 +114,8 @@ export default function ChatMAX() {
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
         try {
-            const response = await sendChatMessage(trimmed, 'default_user', activeConvId, genLLM);
+            // NEW: Passing systemPrompt down into the API call
+            const response = await sendChatMessage(trimmed, 'default_user', activeConvId, genLLM, systemPrompt);
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -180,7 +182,6 @@ export default function ChatMAX() {
     return (
         <div className="flex h-full w-full overflow-hidden relative">
             
-            {/* NEW: Top-Middle Caution Alert */}
             {showLlmAlert && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,16 +191,13 @@ export default function ChatMAX() {
                 </div>
             )}
 
-            {/* Main Chat Area */}
             <div className="flex-1 flex flex-col h-full min-w-0">
-                {/* Messages */}
                 <div className="flex-1 overflow-y-auto">
                     {!isChatStarted ? (
                         <div className="flex flex-col items-center justify-center h-full gap-4">
                             <h1 className="text-3xl font-bold text-gray-300">ChatDOX</h1>
                             <p className="text-gray-500 text-sm">Your RAG assistant.</p>
 
-                            {/* Action Buttons */}
                             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-6">
                                 <div className="flex flex-col gap-4">
                                     <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group">
@@ -267,7 +265,6 @@ export default function ChatMAX() {
                     )}
                 </div>
 
-                {/* Input */}
                 <div className="flex-shrink-0 p-6">
                     <div className="max-w-3xl mx-auto">
                         <div className="flex items-end gap-2 rounded-xl border border-gray-700/60 bg-secondary/40 backdrop-blur-sm px-4 py-2.5 focus-within:border-gray-500 transition-colors">
@@ -293,7 +290,7 @@ export default function ChatMAX() {
                 </div>
             </div>
 
-            {/* History Sidebar */}
+            {/* NEW: Passed systemPrompt props down */}
             <HistorySidebar
                 conversations={conversations}
                 activeId={activeConvId}
@@ -303,6 +300,8 @@ export default function ChatMAX() {
                 isOpen={historyOpen}
                 onToggle={() => setHistoryOpen(o => !o)}
                 uploadedFile={uploadedFile}
+                systemPrompt={systemPrompt}
+                setSystemPrompt={setSystemPrompt}
             />
         </div>
     );

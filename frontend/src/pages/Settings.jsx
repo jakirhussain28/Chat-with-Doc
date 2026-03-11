@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 import { VscSettings } from "react-icons/vsc";
 
-export default function HistorySidebar({ conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile }) {
+// NEW: Accept systemPrompt and setSystemPrompt as props
+export default function HistorySidebar({ conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile, systemPrompt, setSystemPrompt }) {
     const [chunkSize, setChunkSize] = useState(512);
     const [chunkOverlap, setChunkOverlap] = useState(50);
-    const [systemPrompt, setSystemPrompt] = useState('');
+    // Removed local systemPrompt state from here
     const [temperature, setTemperature] = useState(1.0);
     const [topK, setTopK] = useState(5);
     const [topP, setTopP] = useState(0.8);
@@ -17,14 +18,11 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
             onMouseEnter={() => !isOpen && onToggle()}
             onMouseLeave={() => isOpen && onToggle()}
         >
-            {/* Inner wrapper — always 330px wide, clipped by parent overflow-hidden */}
             <div className="w-[330px] h-full flex flex-col">
-                {/* Collapsed icon — visible only when collapsed */}
                 <div className={`absolute top-0 left-0 w-[50px] h-[52px] flex items-center justify-center transition-opacity duration-300 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                     <VscSettings className="w-6 h-6 text-gray-400" />
                 </div>
 
-                {/* Uploaded file name */}
                 <div className={`flex items-center justify-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     <span
                         className="px-4 py-3 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full"
@@ -34,13 +32,10 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                     </span>
                 </div>
 
-                {/* Divider */}
                 <div className={`h-[1px] bg-[rgb(65,60,75)] mx-[10px] mb-1 flex-shrink-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} />
 
-                {/* Scrollable Settings Area */}
                 <div className={`flex-1 overflow-y-auto px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
-                    {/* Chunk Size & Overlap */}
                     <div className="mb-4">
                         <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Size</label>
                         <input
@@ -65,7 +60,7 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
 
                     <div className="h-[1px] bg-[#2a303f] mb-6 w-[calc(100%+40px)] -ml-5" />
 
-                    {/* System Prompt */}
+                    {/* System Prompt uses props now */}
                     <div className="mb-6">
                         <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-2 font-mono">SYSTEM PROMPT</label>
                         <textarea
@@ -78,11 +73,9 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
 
                     <div className="h-[1px] bg-[#2a303f] mb-6 w-[calc(100%+40px)] -ml-5" />
 
-                    {/* Generation Params */}
                     <div>
                         <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-5 font-mono">GENERATION PARAMETERS</label>
 
-                        {/* Temperature */}
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Temperature</label>
@@ -98,7 +91,6 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                             />
                         </div>
 
-                        {/* Top K */}
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Top K</label>
@@ -114,7 +106,6 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                             />
                         </div>
 
-                        {/* Top p */}
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Top p</label>
@@ -130,7 +121,6 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                             />
                         </div>
 
-                        {/* Max Tokens Limit */}
                         <div className="mb-4">
                             <label className="block text-[#8ba0af] text-[13px] mb-2 font-mono">Max Tokens Limit</label>
                             <input
