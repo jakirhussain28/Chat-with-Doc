@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from dotenv import load_dotenv
+import uvicorn
 
 # Load environment variables
 load_dotenv()
@@ -22,16 +23,13 @@ app.add_middleware(
     allow_origins=["*"],  # Adjust this in production
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
 # ─── MongoDB Setup ────────────────────────────────────────────────────────────
 
 # Uses the exact URI provided in your .env file
-MONGO_URI = os.getenv(
-    "MONGODB_URI_LOCAL", 
-    "mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.7.0"
-)
+MONGO_URI = os.getenv("MONGODB_URI_LOCAL")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["chatdox_db"]
 conversations_col = db["conversations"]
@@ -164,3 +162,6 @@ async def delete_conversation(conv_id: str):
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return {"success": True}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=3000, reload=True)

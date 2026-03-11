@@ -19,10 +19,10 @@ export default function ChatMAX() {
     const [genLLM, setGenLLM] = useState('');
     const [embedLLM, setEmbedLLM] = useState('');
     const [uploadedFile, setUploadedFile] = useState(null);
-    
+
     // NEW: default system prompt state
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
-    
+
     // State to control the top-middle caution alert
     const [showLlmAlert, setShowLlmAlert] = useState(false);
 
@@ -181,7 +181,7 @@ export default function ChatMAX() {
 
     return (
         <div className="flex h-full w-full overflow-hidden relative">
-            
+
             {showLlmAlert && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,7 +242,7 @@ export default function ChatMAX() {
                                         <div className="flex gap-4 items-start">
                                             <CiChat1 className="w-8 h-8 text-gray-500 -mt-0.5" />
                                             <span className="text-gray-400 font-medium text-lg leading-snug group-hover:text-gray-300 transition-colors">
-                                                Start New Chat
+                                                Start RAG Chat
                                             </span>
                                         </div>
                                         <div className="absolute bottom-6 left-0 right-0 text-center">
