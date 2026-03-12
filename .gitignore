@@ -2,6 +2,7 @@ check.jsx
 backend/venv
 backend/__pycache__
 .DS_Store
+chroma_data
 # Logs
 logs
 *.log

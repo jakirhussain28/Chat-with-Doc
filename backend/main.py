@@ -3,7 +3,7 @@ import json
 import httpx
 from datetime import datetime
 from typing import List, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,6 +11,8 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from dotenv import load_dotenv
 import uvicorn
+
+from rag_engine import process_document, query_context
 
 # Load environment variables
 load_dotenv()
@@ -40,15 +42,51 @@ class ChatRequest(BaseModel):
     user_id: str
     conversation_id: Optional[str] = None
     model: Optional[str] = "llama3:instruct"
+    embed_model: Optional[str] = None  # Added embed_model
     system_prompt: Optional[str] = None
-    
-    # NEW: Added generation parameters mapped from frontend
     temperature: Optional[float] = 1.0
     top_k: Optional[int] = 5
     top_p: Optional[float] = 0.8
     max_tokens: Optional[int] = 800
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
+
+@app.post("/api/upload")
+async def upload_document(
+    file: UploadFile = File(...),
+    conversation_id: Optional[str] = Form(None),
+    chunk_size: int = Form(512),
+    chunk_overlap: int = Form(50),
+    embed_model: str = Form(...)
+):
+    # 1. If no active conversation, create a new one to bind the file to
+    if not conversation_id or conversation_id == "null":
+        conv = {
+            "user_id": "default_user", 
+            "title": f"Doc: {file.filename[:20]}",
+            "messages": [],
+            "threads": [{"_id": str(ObjectId()), "title": "Main Thread"}], 
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        res = await conversations_col.insert_one(conv)
+        conversation_id = str(res.inserted_id)
+
+    collection_name = f"conv_{conversation_id}"
+    
+    # 2. Read and process the document
+    content = await file.read()
+    num_chunks = await process_document(
+        content, file.filename, collection_name, 
+        chunk_size, chunk_overlap, embed_model
+    )
+    
+    return {
+        "message": "Success", 
+        "chunks_processed": num_chunks, 
+        "filename": file.filename,
+        "conversation_id": conversation_id
+    }
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
@@ -84,16 +122,25 @@ async def chat_endpoint(req: ChatRequest):
     # Prepare message history for Ollama context
     messages_history = conv.get("messages", []) + [user_msg]
 
-    # Inject the system prompt
+    # 3. Retrieve Context from ChromaDB if an embedding model is provided
+    if req.embed_model:
+        collection_name = f"conv_{conv_id_str}"
+        context = await query_context(req.message, collection_name, req.embed_model, top_k=req.top_k)
+        
+        if context:
+            # Inject context right before the user's latest query
+            rag_instruction = f"Context information is below.\n---------------------\n{context}\n---------------------\nGiven the context information, answer the user's question."
+            messages_history.insert(-1, {"role": "system", "content": rag_instruction})
+
+    # Inject the system prompt at the very beginning
     if req.system_prompt and req.system_prompt.strip():
         messages_history.insert(0, {"role": "system", "content": req.system_prompt.strip()})
 
-    # 3. Stream from Local Ollama
+    # 4. Stream from Local Ollama
     async def event_generator():
         assistant_content = ""
         ollama_url = "http://localhost:11434/api/chat"
         
-        # Inject the model and generation parameters requested by the frontend
         payload = {
             "model": req.model, 
             "messages": messages_history,
@@ -102,7 +149,7 @@ async def chat_endpoint(req: ChatRequest):
                 "temperature": req.temperature,
                 "top_k": req.top_k,
                 "top_p": req.top_p,
-                "num_predict": req.max_tokens  # Maps max_tokens to Ollama's num_predict
+                "num_predict": req.max_tokens 
             }
         }
 
@@ -120,7 +167,7 @@ async def chat_endpoint(req: ChatRequest):
                     except Exception as e:
                         print(f"Error parsing line: {e}")
 
-        # 4. Save the assistant's message to MongoDB
+        # 5. Save the assistant's message to MongoDB
         assistant_msg = {"role": "assistant", "content": assistant_content}
         await conversations_col.update_one(
             {"_id": ObjectId(conv_id_str)},
@@ -130,11 +177,10 @@ async def chat_endpoint(req: ChatRequest):
             }
         )
 
-        # 5. Yield the done flag
+        # 6. Yield the done flag
         yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id_str})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
-
 
 @app.get("/api/users/{user_id}/conversations")
 async def get_conversations(user_id: str):
@@ -148,7 +194,6 @@ async def get_conversations(user_id: str):
         })
     return convs
 
-
 @app.get("/api/conversations/{conv_id}")
 async def get_conversation(conv_id: str):
     doc = await conversations_col.find_one({"_id": ObjectId(conv_id)})
@@ -160,10 +205,10 @@ async def get_conversation(conv_id: str):
         "messages": doc.get("messages", [])
     }
 
-
 @app.delete("/api/conversations/{conv_id}")
 async def delete_conversation(conv_id: str):
     res = await conversations_col.delete_one({"_id": ObjectId(conv_id)})
+    # Optional: You could also delete the ChromaDB collection here using chroma_client.delete_collection(name=f"conv_{conv_id}")
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return {"success": True}

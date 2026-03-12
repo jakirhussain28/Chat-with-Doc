@@ -3,7 +3,7 @@ import { IoSend } from 'react-icons/io5';
 import { CiChat1 } from "react-icons/ci";
 import HistorySidebar from './Settings.jsx';
 import ChatBubble from './ChatBubble.jsx';
-import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation } from '../api/chat';
+import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument } from '../api/chat';
 import llmConfig from '../config/llm_config.json';
 
 export default function ChatMAX() {
@@ -18,14 +18,19 @@ export default function ChatMAX() {
     const [embedLLM, setEmbedLLM] = useState(() => localStorage.getItem('embedLLM') || '');
     const [uploadedFile, setUploadedFile] = useState(null);
 
-    // Lifted State for Prompts and Parameters
+    // Prompts, Parameters, and Chunks
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
     const [temperature, setTemperature] = useState(1.0);
     const [topK, setTopK] = useState(5);
     const [topP, setTopP] = useState(0.8);
     const [maxTokens, setMaxTokens] = useState('800');
+    const [chunkSize, setChunkSize] = useState(512);
+    const [chunkOverlap, setChunkOverlap] = useState(50);
 
+    // Alerts & UI States
     const [showLlmAlert, setShowLlmAlert] = useState(false);
+    const [showEmbedAlert, setShowEmbedAlert] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
         if (genLLM) localStorage.setItem('genLLM', genLLM);
@@ -39,14 +44,6 @@ export default function ChatMAX() {
     const textareaRef = useRef(null);
 
     const [placeholder] = useState("Ask questions about your document");
-
-    const handleFileClick = () => document.getElementById('chat-file-input')?.click();
-    const handleFileChange = (e) => {
-        if (e.target.files && e.target.files[0]) {
-            setUploadedFile(e.target.files[0].name);
-            setHistoryOpen(true);
-        }
-    };
 
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -84,6 +81,7 @@ export default function ChatMAX() {
         setMessages([]);
         setActiveConvId(null);
         setInputValue('');
+        setUploadedFile(null); // Clear file to return to standard chat
     };
 
     const handleDeleteConversation = async (convId) => {
@@ -96,13 +94,57 @@ export default function ChatMAX() {
         }
     };
 
+    const handleFileClick = () => document.getElementById('chat-file-input')?.click();
+    
+    const handleFileChange = async (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            
+            // Enforce Embedding LLM selection before uploading
+            if (!embedLLM) {
+                setShowEmbedAlert(true);
+                setTimeout(() => setShowEmbedAlert(false), 3000);
+                e.target.value = null; // Clear the input
+                return;
+            }
+
+            setIsUploading(true);
+            try {
+                const res = await uploadDocument(file, activeConvId, chunkSize, chunkOverlap, embedLLM);
+                setUploadedFile(file.name);
+                setHistoryOpen(true);
+                
+                // If it's a new chat, auto-select the conversation the backend generated
+                if (res.conversation_id && !activeConvId) {
+                    setActiveConvId(res.conversation_id);
+                    loadConversations(); 
+                }
+            } catch (err) {
+                console.error("Upload failed", err);
+                alert("Failed to process document.");
+                setUploadedFile(null);
+            } finally {
+                setIsUploading(false);
+                e.target.value = null; // Reset input so same file can be chosen again if needed
+            }
+        }
+    };
+
     const handleSend = async () => {
         const trimmed = inputValue.trim();
         if (!trimmed || isStreaming) return;
 
+        // Validation 1: Generation LLM always required
         if (!genLLM) {
             setShowLlmAlert(true);
             setTimeout(() => setShowLlmAlert(false), 3000);
+            return;
+        }
+
+        // Validation 2: Embedding LLM required if RAG Mode (file uploaded)
+        if (uploadedFile && !embedLLM) {
+            setShowEmbedAlert(true);
+            setTimeout(() => setShowEmbedAlert(false), 3000);
             return;
         }
 
@@ -114,7 +156,6 @@ export default function ChatMAX() {
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
         try {
-            // Bundle generation parameters
             const options = {
                 temperature: temperature,
                 top_k: topK,
@@ -122,7 +163,9 @@ export default function ChatMAX() {
                 max_tokens: parseInt(maxTokens, 10) || 800
             };
 
-            const response = await sendChatMessage(trimmed, 'default_user', activeConvId, genLLM, systemPrompt, options);
+            const response = await sendChatMessage(
+                trimmed, 'default_user', activeConvId, genLLM, (uploadedFile ? embedLLM : null), systemPrompt, options
+            );
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -189,12 +232,23 @@ export default function ChatMAX() {
     return (
         <div className="flex h-full w-full overflow-hidden relative">
 
+            {/* Gen LLM Alert */}
             {showLlmAlert && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span className="font-medium text-sm tracking-wide">Please select a Generation LLM</span>
+                </div>
+            )}
+
+            {/* Embed LLM Alert */}
+            {showEmbedAlert && (
+                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span className="font-medium text-sm tracking-wide">Please select an Embedding LLM for RAG Chat</span>
                 </div>
             )}
 
@@ -263,15 +317,19 @@ export default function ChatMAX() {
                                 </div>
 
                                 <div className="h-full">
-                                    <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.csv" />
+                                    <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.docx,.csv" />
                                     <div
                                         onClick={handleFileClick}
-                                        className="relative w-full h-full bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex flex-col p-6 border border-gray-700/50 transition-colors cursor-pointer group shadow-sm"
+                                        className={`relative w-full h-full rounded-xl flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${
+                                            isUploading 
+                                            ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' 
+                                            : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
+                                        }`}
                                     >
                                         <div className="flex gap-4 items-start">
                                             <CiChat1 className="w-8 h-8 text-gray-500 -mt-0.5" />
                                             <span className="text-gray-400 font-medium text-lg leading-snug group-hover:text-gray-300 transition-colors">
-                                                Start RAG Chat
+                                                {isUploading ? 'Processing File...' : 'Start RAG Chat'}
                                             </span>
                                         </div>
                                         <div className="absolute bottom-6 left-0 right-0 text-center">
@@ -309,7 +367,7 @@ export default function ChatMAX() {
                             />
                             <button
                                 onClick={handleSend}
-                                disabled={!inputValue.trim() || isStreaming}
+                                disabled={!inputValue.trim() || isStreaming || isUploading}
                                 className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
                                 aria-label="Send message">
                                 <IoSend className="w-4.5 h-4.5" />
@@ -329,7 +387,6 @@ export default function ChatMAX() {
                 onToggle={() => setHistoryOpen(o => !o)}
                 uploadedFile={uploadedFile}
                 
-                // Passing all configuration props down
                 systemPrompt={systemPrompt}
                 setSystemPrompt={setSystemPrompt}
                 temperature={temperature}
@@ -340,6 +397,10 @@ export default function ChatMAX() {
                 setTopP={setTopP}
                 maxTokens={maxTokens}
                 setMaxTokens={setMaxTokens}
+                chunkSize={chunkSize}
+                setChunkSize={setChunkSize}
+                chunkOverlap={chunkOverlap}
+                setChunkOverlap={setChunkOverlap}
             />
         </div>
     );

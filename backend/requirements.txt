@@ -4,3 +4,11 @@ motor
 pydantic
 httpx
 python-dotenv
+python-multipart
+chromadb
+langchain
+langchain-community
+langchain-chroma
+langchain-ollama
+pymupdf
+docx2txt

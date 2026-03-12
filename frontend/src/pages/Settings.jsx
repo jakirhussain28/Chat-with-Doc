@@ -1,20 +1,16 @@
-import React, { useState } from 'react';
-import { IoAdd, IoTrashOutline } from 'react-icons/io5';
+import React from 'react';
 import { VscSettings } from "react-icons/vsc";
 
 export default function HistorySidebar({
     conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile,
     systemPrompt, setSystemPrompt,
-    // NEW: Generation parameter props
     temperature, setTemperature,
     topK, setTopK,
     topP, setTopP,
-    maxTokens, setMaxTokens
+    maxTokens, setMaxTokens,
+    chunkSize, setChunkSize,
+    chunkOverlap, setChunkOverlap
 }) {
-    // Only keeping RAG chunk settings as local state for now
-    const [chunkSize, setChunkSize] = useState(512);
-    const [chunkOverlap, setChunkOverlap] = useState(50);
-
     return (
         <div
             className={`h-full flex flex-col bg-secondary/70 backdrop-blur-sm text-[15px] border-l border-[#413c4b] overflow-hidden transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[330px] min-w-[330px]' : 'w-[50px] min-w-[50px]'}`}
