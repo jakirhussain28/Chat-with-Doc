@@ -6,8 +6,6 @@ import ChatBubble from './ChatBubble.jsx';
 import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation } from '../api/chat';
 import llmConfig from '../config/llm_config.json';
 
-// ─── ChatDOX ───────────────────────────────────────────────────────────────────
-
 export default function ChatMAX() {
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
@@ -20,13 +18,15 @@ export default function ChatMAX() {
     const [embedLLM, setEmbedLLM] = useState(() => localStorage.getItem('embedLLM') || '');
     const [uploadedFile, setUploadedFile] = useState(null);
 
-    // NEW: default system prompt state
+    // Lifted State for Prompts and Parameters
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
+    const [temperature, setTemperature] = useState(1.0);
+    const [topK, setTopK] = useState(5);
+    const [topP, setTopP] = useState(0.8);
+    const [maxTokens, setMaxTokens] = useState('800');
 
-    // State to control the top-middle caution alert
     const [showLlmAlert, setShowLlmAlert] = useState(false);
 
-    // Persist LLM selections
     useEffect(() => {
         if (genLLM) localStorage.setItem('genLLM', genLLM);
     }, [genLLM]);
@@ -48,12 +48,10 @@ export default function ChatMAX() {
         }
     };
 
-    // Scroll to bottom
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    // Auto-resize textarea
     useEffect(() => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
@@ -61,7 +59,6 @@ export default function ChatMAX() {
         }
     }, [inputValue]);
 
-    // Load conversations
     const loadConversations = useCallback(async () => {
         try {
             const data = await fetchConversations('default_user');
@@ -73,7 +70,6 @@ export default function ChatMAX() {
 
     useEffect(() => { loadConversations(); }, [loadConversations]);
 
-    // Load a conversation
     const loadConversation = async (convId) => {
         try {
             const conv = await fetchConversation(convId);
@@ -84,14 +80,12 @@ export default function ChatMAX() {
         }
     };
 
-    // New chat
     const handleNewChat = () => {
         setMessages([]);
         setActiveConvId(null);
         setInputValue('');
     };
 
-    // Delete conversation
     const handleDeleteConversation = async (convId) => {
         try {
             await deleteConversation(convId);
@@ -102,12 +96,10 @@ export default function ChatMAX() {
         }
     };
 
-    // Send message
     const handleSend = async () => {
         const trimmed = inputValue.trim();
         if (!trimmed || isStreaming) return;
 
-        // Show top-middle caution if Generation LLM is missing
         if (!genLLM) {
             setShowLlmAlert(true);
             setTimeout(() => setShowLlmAlert(false), 3000);
@@ -119,12 +111,18 @@ export default function ChatMAX() {
         setInputValue('');
         setIsStreaming(true);
 
-        // Add placeholder for bot response
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
         try {
-            // NEW: Passing systemPrompt down into the API call
-            const response = await sendChatMessage(trimmed, 'default_user', activeConvId, genLLM, systemPrompt);
+            // Bundle generation parameters
+            const options = {
+                temperature: temperature,
+                top_k: topK,
+                top_p: topP,
+                max_tokens: parseInt(maxTokens, 10) || 800
+            };
+
+            const response = await sendChatMessage(trimmed, 'default_user', activeConvId, genLLM, systemPrompt, options);
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
             let buffer = '';
@@ -321,7 +319,6 @@ export default function ChatMAX() {
                 </div>
             </div>
 
-            {/* NEW: Passed systemPrompt props down */}
             <HistorySidebar
                 conversations={conversations}
                 activeId={activeConvId}
@@ -331,8 +328,18 @@ export default function ChatMAX() {
                 isOpen={historyOpen}
                 onToggle={() => setHistoryOpen(o => !o)}
                 uploadedFile={uploadedFile}
+                
+                // Passing all configuration props down
                 systemPrompt={systemPrompt}
                 setSystemPrompt={setSystemPrompt}
+                temperature={temperature}
+                setTemperature={setTemperature}
+                topK={topK}
+                setTopK={setTopK}
+                topP={topP}
+                setTopP={setTopP}
+                maxTokens={maxTokens}
+                setMaxTokens={setMaxTokens}
             />
         </div>
     );

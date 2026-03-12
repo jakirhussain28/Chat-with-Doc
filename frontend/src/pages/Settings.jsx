@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 import { VscSettings } from "react-icons/vsc";
 
-// NEW: Accept systemPrompt and setSystemPrompt as props
-export default function HistorySidebar({ conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile, systemPrompt, setSystemPrompt }) {
+export default function HistorySidebar({ 
+    conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile, 
+    systemPrompt, setSystemPrompt,
+    // NEW: Generation parameter props
+    temperature, setTemperature,
+    topK, setTopK,
+    topP, setTopP,
+    maxTokens, setMaxTokens
+}) {
+    // Only keeping RAG chunk settings as local state for now
     const [chunkSize, setChunkSize] = useState(512);
     const [chunkOverlap, setChunkOverlap] = useState(50);
-    // Removed local systemPrompt state from here
-    const [temperature, setTemperature] = useState(1.0);
-    const [topK, setTopK] = useState(5);
-    const [topP, setTopP] = useState(0.8);
-    const [maxTokens, setMaxTokens] = useState('800');
 
     return (
         <div
@@ -60,7 +63,6 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
 
                     <div className="h-[1px] bg-[#2a303f] mb-6 w-[calc(100%+40px)] -ml-5" />
 
-                    {/* System Prompt uses props now */}
                     <div className="mb-6">
                         <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-2 font-mono">SYSTEM PROMPT</label>
                         <textarea
@@ -79,15 +81,15 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Temperature</label>
-                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{temperature.toFixed(1)}</span>
+                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{Number(temperature).toFixed(1)}</span>
                             </div>
                             <input
                                 type="range"
-                                min="0" max="1" step="0.1"
+                                min="0" max="2" step="0.1"
                                 value={temperature}
                                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #7698ceff ${(temperature / 1) * 100}%, #2a303f ${(temperature / 1) * 100}%)` }}
+                                style={{ background: `linear-gradient(to right, #7698ceff ${(temperature / 2) * 100}%, #2a303f ${(temperature / 2) * 100}%)` }}
                             />
                         </div>
 
@@ -100,7 +102,7 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                                 type="range"
                                 min="0" max="20" step="1"
                                 value={topK}
-                                onChange={(e) => setTopK(parseInt(e.target.value))}
+                                onChange={(e) => setTopK(parseInt(e.target.value, 10))}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
                                 style={{ background: `linear-gradient(to right, #7698ceff ${(topK / 20) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
                             />
@@ -109,7 +111,7 @@ export default function HistorySidebar({ conversations, activeId, onSelect, onDe
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Top p</label>
-                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{topP.toFixed(1)}</span>
+                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{Number(topP).toFixed(1)}</span>
                             </div>
                             <input
                                 type="range"

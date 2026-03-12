@@ -28,7 +28,6 @@ app.add_middleware(
 
 # ─── MongoDB Setup ────────────────────────────────────────────────────────────
 
-# Uses the exact URI provided in your .env file
 MONGO_URI = os.getenv("MONGODB_URI_LOCAL")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["chatdox_db"]
@@ -40,8 +39,14 @@ class ChatRequest(BaseModel):
     message: str
     user_id: str
     conversation_id: Optional[str] = None
-    model: Optional[str] = "llama3:instruct"  # Default model if none provided
-    system_prompt: Optional[str] = None       # NEW: Added system_prompt field
+    model: Optional[str] = "llama3:instruct"
+    system_prompt: Optional[str] = None
+    
+    # NEW: Added generation parameters mapped from frontend
+    temperature: Optional[float] = 1.0
+    top_k: Optional[int] = 5
+    top_p: Optional[float] = 0.8
+    max_tokens: Optional[int] = 800
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
@@ -53,7 +58,6 @@ async def chat_endpoint(req: ChatRequest):
         if not conv:
             raise HTTPException(status_code=404, detail="Conversation not found")
     else:
-        # Create a new conversation with a dummy thread for the Sidebar UI
         conv = {
             "user_id": req.user_id,
             "title": req.message[:30] + "..." if len(req.message) > 30 else req.message,
@@ -80,7 +84,7 @@ async def chat_endpoint(req: ChatRequest):
     # Prepare message history for Ollama context
     messages_history = conv.get("messages", []) + [user_msg]
 
-    # NEW: Inject the system prompt at the beginning of the context dynamically
+    # Inject the system prompt
     if req.system_prompt and req.system_prompt.strip():
         messages_history.insert(0, {"role": "system", "content": req.system_prompt.strip()})
 
@@ -89,11 +93,17 @@ async def chat_endpoint(req: ChatRequest):
         assistant_content = ""
         ollama_url = "http://localhost:11434/api/chat"
         
-        # Inject the model requested by the frontend
+        # Inject the model and generation parameters requested by the frontend
         payload = {
             "model": req.model, 
             "messages": messages_history,
-            "stream": True
+            "stream": True,
+            "options": {
+                "temperature": req.temperature,
+                "top_k": req.top_k,
+                "top_p": req.top_p,
+                "num_predict": req.max_tokens  # Maps max_tokens to Ollama's num_predict
+            }
         }
 
         async with httpx.AsyncClient() as http_client:
@@ -106,12 +116,11 @@ async def chat_endpoint(req: ChatRequest):
                         if "message" in data and "content" in data["message"]:
                             token = data["message"]["content"]
                             assistant_content += token
-                            # Yield chunk exactly as Chat.jsx expects: 'data: {"token": "..."}'
                             yield f"data: {json.dumps({'token': token})}\n\n"
                     except Exception as e:
                         print(f"Error parsing line: {e}")
 
-        # 4. Once streaming completes, save the assistant's message to MongoDB
+        # 4. Save the assistant's message to MongoDB
         assistant_msg = {"role": "assistant", "content": assistant_content}
         await conversations_col.update_one(
             {"_id": ObjectId(conv_id_str)},
@@ -121,16 +130,14 @@ async def chat_endpoint(req: ChatRequest):
             }
         )
 
-        # 5. Yield the done flag and conversation ID to update React state
+        # 5. Yield the done flag
         yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id_str})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
-# ─── Sidebar API Endpoints ────────────────────────────────────────────────────
 
 @app.get("/api/users/{user_id}/conversations")
 async def get_conversations(user_id: str):
-    """Fetches all conversations for the Sidebar."""
     cursor = conversations_col.find({"user_id": user_id}).sort("updated_at", -1)
     convs = []
     async for doc in cursor:
@@ -144,7 +151,6 @@ async def get_conversations(user_id: str):
 
 @app.get("/api/conversations/{conv_id}")
 async def get_conversation(conv_id: str):
-    """Fetches a specific conversation's message history."""
     doc = await conversations_col.find_one({"_id": ObjectId(conv_id)})
     if not doc:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -157,7 +163,6 @@ async def get_conversation(conv_id: str):
 
 @app.delete("/api/conversations/{conv_id}")
 async def delete_conversation(conv_id: str):
-    """Deletes a conversation from MongoDB."""
     res = await conversations_col.delete_one({"_id": ObjectId(conv_id)})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Conversation not found")

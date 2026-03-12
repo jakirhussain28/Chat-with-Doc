@@ -14,13 +14,18 @@ const handleResponse = async (res) => {
  * Send a chat message and stream the response.
  * Returns a Response object whose body is an SSE stream.
  */
-// NEW: Accept systemPrompt as a parameter
-export const sendChatMessage = (message, userId, conversationId = null, model = null, systemPrompt = null) =>
+export const sendChatMessage = (message, userId, conversationId = null, model = null, systemPrompt = null, options = {}) =>
     fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // NEW: Map it to the body payload
-        body: JSON.stringify({ message, user_id: userId, conversation_id: conversationId, model, system_prompt: systemPrompt }),
+        body: JSON.stringify({ 
+            message, 
+            user_id: userId, 
+            conversation_id: conversationId, 
+            model, 
+            system_prompt: systemPrompt,
+            ...options // Spreading the generation parameters into the payload
+        }),
     });
 
 // ─── Conversations ────────────────────────────────────────────────────────────
