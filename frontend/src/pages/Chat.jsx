@@ -16,8 +16,8 @@ export default function ChatMAX() {
     const [activeConvId, setActiveConvId] = useState(null);
     const [historyOpen, setHistoryOpen] = useState(true);
 
-    const [genLLM, setGenLLM] = useState('');
-    const [embedLLM, setEmbedLLM] = useState('');
+    const [genLLM, setGenLLM] = useState(() => localStorage.getItem('genLLM') || '');
+    const [embedLLM, setEmbedLLM] = useState(() => localStorage.getItem('embedLLM') || '');
     const [uploadedFile, setUploadedFile] = useState(null);
 
     // NEW: default system prompt state
@@ -25,6 +25,15 @@ export default function ChatMAX() {
 
     // State to control the top-middle caution alert
     const [showLlmAlert, setShowLlmAlert] = useState(false);
+
+    // Persist LLM selections
+    useEffect(() => {
+        if (genLLM) localStorage.setItem('genLLM', genLLM);
+    }, [genLLM]);
+
+    useEffect(() => {
+        if (embedLLM) localStorage.setItem('embedLLM', embedLLM);
+    }, [embedLLM]);
 
     const chatEndRef = useRef(null);
     const textareaRef = useRef(null);
@@ -200,14 +209,25 @@ export default function ChatMAX() {
 
                             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-6">
                                 <div className="flex flex-col gap-4">
-                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group">
-                                        <span className="text-gray-400 font-thin text-base tracking-wide group-hover:text-gray-300 transition-colors">
-                                            {genLLM || 'Generation LLM'}
+                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
+                                        <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
+                                            genLLM 
+                                                ? 'top-2.5 text-xl font-normal text-gray-400' 
+                                                : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
+                                        }`}>
+                                            Generation LLM
+                                        </span>
+                                        <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
+                                            genLLM 
+                                                ? 'opacity-100 translate-y-0' 
+                                                : 'opacity-0 translate-y-2'
+                                        }`}>
+                                            {genLLM}
                                         </span>
                                         <select
                                             value={genLLM}
                                             onChange={e => setGenLLM(e.target.value)}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         >
                                             <option value="" disabled>Generation LLM</option>
                                             {llmConfig.generation_llms.map(m => (
@@ -216,14 +236,25 @@ export default function ChatMAX() {
                                         </select>
                                     </div>
 
-                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group">
-                                        <span className="text-gray-400 font-thin text-base tracking-wide group-hover:text-gray-300 transition-colors">
-                                            {embedLLM || 'Embedding LLM'}
+                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
+                                        <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
+                                            embedLLM 
+                                                ? 'top-2.5 text-xl font-normal text-gray-400' 
+                                                : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
+                                        }`}>
+                                            Embedding LLM
+                                        </span>
+                                        <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
+                                            embedLLM 
+                                                ? 'opacity-100 translate-y-0' 
+                                                : 'opacity-0 translate-y-2'
+                                        }`}>
+                                            {embedLLM}
                                         </span>
                                         <select
                                             value={embedLLM}
                                             onChange={e => setEmbedLLM(e.target.value)}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         >
                                             <option value="" disabled>Embedding LLM</option>
                                             {llmConfig.embedding_llms.map(m => (
