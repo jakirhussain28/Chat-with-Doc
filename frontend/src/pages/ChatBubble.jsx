@@ -21,7 +21,7 @@ export default function ChatBubble({ role, content, isTyping }) {
         <div className={`flex gap-3 w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] sm:max-w-[75%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm
                 ${isUser
-                    ? 'bg-cyan-600/50 text-white rounded-tr-sm'
+                    ? 'bg-[rgb(3,145,147)]/50 text-white rounded-tr-sm'
                     : 'bg-[#1a1a1f] text-gray-200 border border-gray-700/40 rounded-tl-sm'
                 }`}
             >

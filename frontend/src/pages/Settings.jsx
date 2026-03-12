@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 import { VscSettings } from "react-icons/vsc";
 
-export default function HistorySidebar({ 
-    conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile, 
+export default function HistorySidebar({
+    conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile,
     systemPrompt, setSystemPrompt,
     // NEW: Generation parameter props
     temperature, setTemperature,
@@ -81,45 +81,45 @@ export default function HistorySidebar({
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Temperature</label>
-                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{Number(temperature).toFixed(1)}</span>
+                                <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{Number(temperature).toFixed(1)}</span>
                             </div>
                             <input
                                 type="range"
                                 min="0" max="2" step="0.1"
                                 value={temperature}
                                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #7698ceff ${(temperature / 2) * 100}%, #2a303f ${(temperature / 2) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-3"
+                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(temperature / 2) * 100}%, #2a303f ${(temperature / 2) * 100}%)` }}
                             />
                         </div>
 
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Top K</label>
-                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{topK}</span>
+                                <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{topK}</span>
                             </div>
                             <input
                                 type="range"
                                 min="0" max="20" step="1"
                                 value={topK}
                                 onChange={(e) => setTopK(parseInt(e.target.value, 10))}
-                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #7698ceff ${(topK / 20) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-3"
+                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(topK / 20) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
                             />
                         </div>
 
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Top p</label>
-                                <span className="text-[#3b82f6] font-mono font-bold text-[13px]">{Number(topP).toFixed(1)}</span>
+                                <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{Number(topP).toFixed(1)}</span>
                             </div>
                             <input
                                 type="range"
                                 min="0" max="1" step="0.1"
                                 value={topP}
                                 onChange={(e) => setTopP(parseFloat(e.target.value))}
-                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[#3b82f6] mt-3"
-                                style={{ background: `linear-gradient(to right, #7698ceff ${(topP / 1) * 100}%, #2a303f ${(topP / 1) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-3"
+                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(topP / 1) * 100}%, #2a303f ${(topP / 1) * 100}%)` }}
                             />
                         </div>
 

@@ -168,7 +168,7 @@ export default function ChatMAX() {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
                 if (last?.role === 'assistant' && !last.content) {
-                    updated[updated.length - 1] = { ...last, content: 'Sorry, something went wrong. Please try again.' };
+                    updated[updated.length - 1] = { ...last, content: 'Something went wrong. Please try again.' };
                 }
                 return updated;
             });
