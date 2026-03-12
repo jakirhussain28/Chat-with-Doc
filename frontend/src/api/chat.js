@@ -1,4 +1,4 @@
-import { API_URL } from '../config';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -14,11 +14,18 @@ const handleResponse = async (res) => {
  * Send a chat message and stream the response.
  * Returns a Response object whose body is an SSE stream.
  */
-export const sendChatMessage = (message, userId, conversationId = null) =>
+export const sendChatMessage = (message, userId, conversationId = null, model = null, systemPrompt = null, options = {}) =>
     fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, user_id: userId, conversation_id: conversationId }),
+        body: JSON.stringify({ 
+            message, 
+            user_id: userId, 
+            conversation_id: conversationId, 
+            model, 
+            system_prompt: systemPrompt,
+            ...options // Spreading the generation parameters into the payload
+        }),
     });
 
 // ─── Conversations ────────────────────────────────────────────────────────────

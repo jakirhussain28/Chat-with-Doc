@@ -6,11 +6,8 @@
   }
 }
 
-body,
-a,
-button,
-div {
-  cursor: url(./assets/cursor.svg) 2 2, auto;
+* {
+  cursor: url(./assets/cursor.svg) 2 2, auto !important;
 }
 
 @theme {

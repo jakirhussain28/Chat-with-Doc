@@ -1,7 +1,7 @@
 import React from 'react';
 import logoX from '/src/assets/X-light-logo-corner-32x32.svg';
 import { LuHistory } from "react-icons/lu";
-import { IoAdd, IoTrashOutline, IoChevronDown } from 'react-icons/io5';
+import { IoAdd, IoTrashOutline, IoChevronDown, IoGitBranchOutline } from 'react-icons/io5';
 
 export default function Sidebar({ isOpen, toggleSidebar, conversations = [], activeId, onSelect, onDelete, onNewChat }) {
   const [expandedChats, setExpandedChats] = React.useState({});
@@ -14,7 +14,7 @@ export default function Sidebar({ isOpen, toggleSidebar, conversations = [], act
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-30 flex flex-col h-screen bg-secondary/70 backdrop-blur-sm text-[15px] border-r border-[#413c4b] transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[220px] min-w-[220px]' : 'w-[50px] min-w-[50px]'}`}
+      className={`fixed top-0 left-0 z-30 flex flex-col h-screen bg-secondary/70 backdrop-blur-sm text-[15px] border-r border-[#413c4b] transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[280px] min-w-[280px]' : 'w-[50px] min-w-[50px]'}`}
       onMouseEnter={() => !isOpen && toggleSidebar()}
       onMouseLeave={() => isOpen && toggleSidebar()}
     >
@@ -27,19 +27,26 @@ export default function Sidebar({ isOpen, toggleSidebar, conversations = [], act
       </div>
 
       <div className="relative flex-grow overflow-hidden">
-        <div className="w-[220px] h-full flex flex-col">
+        <div className="w-[280px] h-full flex flex-col">
           {/* Collapsed icon — visible only when collapsed */}
           <div className={`absolute top-0 left-0 w-[50px] h-[52px] flex items-center justify-center transition-opacity duration-300 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <LuHistory className="w-5 h-5 text-gray-400" />
           </div>
 
-          {/* New Thread pill button */}
-          <div className={`flex items-center justify-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {/* New Chat pill button */}
+          <div className={`flex items-center justify-center gap-2 pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={onNewChat}
-              className="flex items-center gap-2 px-5 py-2 rounded-full bg-[rgba(30,30,32,0.8)] border border-gray-700/60 text-primary text-sm font-medium hover:bg-[rgba(40,40,44,0.9)] transition-colors whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(30,30,32,0.8)] border border-gray-700/60 text-primary text-sm font-medium hover:bg-[rgba(40,40,44,0.9)] transition-colors whitespace-nowrap"
             >
               <IoAdd className="w-4 h-4 flex-shrink-0" />
+              New Chat
+            </button>
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[rgba(30,30,32,0.8)] border border-gray-700/60 text-primary text-sm font-medium hover:bg-[rgba(40,40,44,0.9)] transition-colors whitespace-nowrap"
+              title="New Thread"
+            >
+              <IoGitBranchOutline className="w-4 h-4 flex-shrink-0" />
               New Thread
             </button>
           </div>
