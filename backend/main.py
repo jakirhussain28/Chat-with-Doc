@@ -65,7 +65,6 @@ async def upload_document(
             "user_id": "default_user", 
             "title": f"Doc: {file.filename[:20]}",
             "messages": [],
-            "threads": [{"_id": str(ObjectId()), "title": "Main Thread"}], 
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -100,7 +99,6 @@ async def chat_endpoint(req: ChatRequest):
             "user_id": req.user_id,
             "title": req.message[:30] + "..." if len(req.message) > 30 else req.message,
             "messages": [],
-            "threads": [{"_id": str(ObjectId()), "title": "Main Thread"}], 
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -189,8 +187,7 @@ async def get_conversations(user_id: str):
     async for doc in cursor:
         convs.append({
             "_id": str(doc["_id"]),
-            "title": doc.get("title", "New Chat"),
-            "threads": doc.get("threads", [])
+            "title": doc.get("title", "New Chat")
         })
     return convs
 

@@ -1,10 +1,10 @@
 {
   "generation_llms": [
-    "gemma3:1b",
     "llama3:instruct",
     "qwen3:4b-instruct-2507-q4_K_M",
     "qwen3:4b",
-    "gemma3:4b"
+    "gemma3:4b",
+    "gemma3:1b"
   ],
   "embedding_llms": [
     "qwen3-embedding:0.6b",
