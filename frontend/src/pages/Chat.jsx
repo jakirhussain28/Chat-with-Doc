@@ -3,10 +3,21 @@ import { IoSend } from 'react-icons/io5';
 import { CiChat1 } from "react-icons/ci";
 import HistorySidebar from './Settings.jsx';
 import ChatBubble from './ChatBubble.jsx';
+import Sidebar from './Sidebar.jsx'; // Imported Sidebar
 import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument } from '../api/chat';
 import llmConfig from '../config/llm_config.json';
 
 export default function ChatMAX() {
+    // Sidebar State
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+        const saved = localStorage.getItem('isSidebarOpen');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
+
+    useEffect(() => { 
+        localStorage.setItem('isSidebarOpen', JSON.stringify(isSidebarOpen)); 
+    }, [isSidebarOpen]);
+
     const [messages, setMessages] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [isStreaming, setIsStreaming] = useState(false);
@@ -18,7 +29,6 @@ export default function ChatMAX() {
     const [embedLLM, setEmbedLLM] = useState(() => localStorage.getItem('embedLLM') || '');
     const [uploadedFile, setUploadedFile] = useState(null);
 
-    // Prompts, Parameters, and Chunks
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
     const [temperature, setTemperature] = useState(1.0);
     const [topK, setTopK] = useState(5);
@@ -27,7 +37,6 @@ export default function ChatMAX() {
     const [chunkSize, setChunkSize] = useState(512);
     const [chunkOverlap, setChunkOverlap] = useState(50);
 
-    // Alerts & UI States
     const [showLlmAlert, setShowLlmAlert] = useState(false);
     const [showEmbedAlert, setShowEmbedAlert] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
@@ -42,7 +51,6 @@ export default function ChatMAX() {
 
     const chatEndRef = useRef(null);
     const textareaRef = useRef(null);
-
     const [placeholder] = useState("Ask questions about your document");
 
     useEffect(() => {
@@ -81,7 +89,7 @@ export default function ChatMAX() {
         setMessages([]);
         setActiveConvId(null);
         setInputValue('');
-        setUploadedFile(null); // Clear file to return to standard chat
+        setUploadedFile(null);
     };
 
     const handleDeleteConversation = async (convId) => {
@@ -100,11 +108,10 @@ export default function ChatMAX() {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             
-            // Enforce Embedding LLM selection before uploading
             if (!embedLLM) {
                 setShowEmbedAlert(true);
                 setTimeout(() => setShowEmbedAlert(false), 3000);
-                e.target.value = null; // Clear the input
+                e.target.value = null; 
                 return;
             }
 
@@ -114,7 +121,6 @@ export default function ChatMAX() {
                 setUploadedFile(file.name);
                 setHistoryOpen(true);
                 
-                // If it's a new chat, auto-select the conversation the backend generated
                 if (res.conversation_id && !activeConvId) {
                     setActiveConvId(res.conversation_id);
                     loadConversations(); 
@@ -125,7 +131,7 @@ export default function ChatMAX() {
                 setUploadedFile(null);
             } finally {
                 setIsUploading(false);
-                e.target.value = null; // Reset input so same file can be chosen again if needed
+                e.target.value = null; 
             }
         }
     };
@@ -134,14 +140,12 @@ export default function ChatMAX() {
         const trimmed = inputValue.trim();
         if (!trimmed || isStreaming) return;
 
-        // Validation 1: Generation LLM always required
         if (!genLLM) {
             setShowLlmAlert(true);
             setTimeout(() => setShowLlmAlert(false), 3000);
             return;
         }
 
-        // Validation 2: Embedding LLM required if RAG Mode (file uploaded)
         if (uploadedFile && !embedLLM) {
             setShowEmbedAlert(true);
             setTimeout(() => setShowEmbedAlert(false), 3000);
@@ -196,9 +200,6 @@ export default function ChatMAX() {
                         if (data.done && data.conversation_id) {
                             convId = data.conversation_id;
                         }
-                        if (data.error) {
-                            console.error('Stream error:', data.error);
-                        }
                     } catch { /* skip malformed lines */ }
                 }
             }
@@ -232,22 +233,25 @@ export default function ChatMAX() {
     return (
         <div className="flex h-full w-full overflow-hidden relative">
 
-            {/* Gen LLM Alert */}
+            {/* Left Sidebar Added Here */}
+            <Sidebar
+                isOpen={isSidebarOpen}
+                toggleSidebar={() => setIsSidebarOpen(o => !o)}
+                conversations={conversations}
+                activeId={activeConvId}
+                onSelect={loadConversation}
+                onDelete={handleDeleteConversation}
+                onNewChat={handleNewChat}
+            />
+
             {showLlmAlert && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
                     <span className="font-medium text-sm tracking-wide">Please select a Generation LLM</span>
                 </div>
             )}
 
-            {/* Embed LLM Alert */}
             {showEmbedAlert && (
                 <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
                     <span className="font-medium text-sm tracking-wide">Please select an Embedding LLM for RAG Chat</span>
                 </div>
             )}
@@ -263,19 +267,11 @@ export default function ChatMAX() {
                                 <div className="flex flex-col gap-4">
                                     <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
                                         <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
-                                            genLLM 
-                                                ? 'top-2.5 text-xl font-normal text-gray-400' 
-                                                : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
-                                        }`}>
-                                            Generation LLM
-                                        </span>
+                                            genLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
+                                        }`}>Generation LLM</span>
                                         <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
-                                            genLLM 
-                                                ? 'opacity-100 translate-y-0' 
-                                                : 'opacity-0 translate-y-2'
-                                        }`}>
-                                            {genLLM}
-                                        </span>
+                                            genLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                                        }`}>{genLLM}</span>
                                         <select
                                             value={genLLM}
                                             onChange={e => setGenLLM(e.target.value)}
@@ -290,19 +286,11 @@ export default function ChatMAX() {
 
                                     <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
                                         <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
-                                            embedLLM 
-                                                ? 'top-2.5 text-xl font-normal text-gray-400' 
-                                                : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
-                                        }`}>
-                                            Embedding LLM
-                                        </span>
+                                            embedLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
+                                        }`}>Embedding LLM</span>
                                         <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
-                                            embedLLM 
-                                                ? 'opacity-100 translate-y-0' 
-                                                : 'opacity-0 translate-y-2'
-                                        }`}>
-                                            {embedLLM}
-                                        </span>
+                                            embedLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                                        }`}>{embedLLM}</span>
                                         <select
                                             value={embedLLM}
                                             onChange={e => setEmbedLLM(e.target.value)}
@@ -321,9 +309,7 @@ export default function ChatMAX() {
                                     <div
                                         onClick={handleFileClick}
                                         className={`relative w-full h-full rounded-xl flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${
-                                            isUploading 
-                                            ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' 
-                                            : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
+                                            isUploading ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
                                         }`}
                                     >
                                         <div className="flex gap-4 items-start">
@@ -369,7 +355,7 @@ export default function ChatMAX() {
                                 onClick={handleSend}
                                 disabled={!inputValue.trim() || isStreaming || isUploading}
                                 className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
-                                aria-label="Send message">
+                            >
                                 <IoSend className="w-4.5 h-4.5" />
                             </button>
                         </div>
@@ -386,7 +372,6 @@ export default function ChatMAX() {
                 isOpen={historyOpen}
                 onToggle={() => setHistoryOpen(o => !o)}
                 uploadedFile={uploadedFile}
-                
                 systemPrompt={systemPrompt}
                 setSystemPrompt={setSystemPrompt}
                 temperature={temperature}

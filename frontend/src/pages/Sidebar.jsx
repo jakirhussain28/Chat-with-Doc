@@ -6,7 +6,7 @@ import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 export default function Sidebar({ isOpen, toggleSidebar, conversations = [], activeId, onSelect, onDelete, onNewChat }) {
   return (
     <aside
-      className={`fixed top-0 left-0 z-30 flex flex-col h-screen bg-secondary/70 backdrop-blur-sm text-[15px] border-r border-[#413c4b] transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[280px] min-w-[280px]' : 'w-[50px] min-w-[50px]'}`}
+      className={`relative z-30 flex flex-col h-screen bg-secondary/70 backdrop-blur-sm text-[15px] border-r border-[#413c4b] transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[280px] min-w-[280px]' : 'w-[50px] min-w-[50px]'}`}
       onMouseEnter={() => !isOpen && toggleSidebar()}
       onMouseLeave={() => isOpen && toggleSidebar()}
     >
@@ -70,8 +70,6 @@ export default function Sidebar({ isOpen, toggleSidebar, conversations = [], act
           </nav>
         </div>
       </div>
-
-
     </aside>
   );
 }
