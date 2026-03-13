@@ -9,7 +9,8 @@ export default function HistorySidebar({
     topP, setTopP,
     maxTokens, setMaxTokens,
     chunkSize, setChunkSize,
-    chunkOverlap, setChunkOverlap
+    chunkOverlap, setChunkOverlap,
+    genLLM, setGenLLM, generationLLMs
 }) {
     return (
         <div
@@ -35,31 +36,33 @@ export default function HistorySidebar({
 
                 <div className={`flex-1 overflow-y-auto px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
-                    <div className="mb-4">
+                    <div className={`mb-4 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
                         <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Size</label>
                         <input
                             type="text"
                             placeholder="512"
                             value={chunkSize}
                             onChange={(e) => setChunkSize(e.target.value)}
-                            className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563]"
+                            disabled={!!uploadedFile}
+                            className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed"
                         />
                     </div>
 
-                    <div className="mb-6">
+                    <div className={`mb-6 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
                         <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Overlap</label>
                         <input
                             type="text"
                             placeholder="50"
                             value={chunkOverlap}
                             onChange={(e) => setChunkOverlap(e.target.value)}
-                            className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563]"
+                            disabled={!!uploadedFile}
+                            className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed"
                         />
                     </div>
 
-                    <div className="h-[1px] bg-[#2a303f] mb-6 w-[calc(100%+40px)] -ml-5" />
+                    <div className="h-[1px] bg-[#2a303f] mb-4 w-[calc(100%+40px)] -ml-5" />
 
-                    <div className="mb-6">
+                    <div className="mb-4">
                         <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-2 font-mono">SYSTEM PROMPT</label>
                         <textarea
                             placeholder="e.g. You are a helpful assistant..."
@@ -69,7 +72,7 @@ export default function HistorySidebar({
                         />
                     </div>
 
-                    <div className="h-[1px] bg-[#2a303f] mb-6 w-[calc(100%+40px)] -ml-5" />
+                    <div className="h-[1px] bg-[#2a303f] mb-4 w-[calc(100%+40px)] -ml-5" />
 
                     <div>
                         <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-5 font-mono">GENERATION PARAMETERS</label>
@@ -127,6 +130,20 @@ export default function HistorySidebar({
                                 onChange={(e) => setMaxTokens(e.target.value)}
                                 className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563]"
                             />
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block text-[#8ba0af] text-[13px] mb-2 font-mono">Generation LLM</label>
+                            <select
+                                value={genLLM}
+                                onChange={(e) => setGenLLM(e.target.value)}
+                                className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:outline-none focus:border-[#4b5563] cursor-pointer appearance-none"
+                            >
+                                <option value="" disabled>Select model</option>
+                                {(generationLLMs || []).map(m => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
                         </div>
 
                     </div>

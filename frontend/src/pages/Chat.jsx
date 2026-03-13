@@ -4,7 +4,7 @@ import { CiChat1 } from "react-icons/ci";
 import HistorySidebar from './Settings.jsx';
 import ChatBubble from './ChatBubble.jsx';
 import Sidebar from './Sidebar.jsx'; // Imported Sidebar
-import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument } from '../api/chat';
+import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument, updateSettings } from '../api/chat';
 import llmConfig from '../config/llm_config.json';
 
 export default function ChatMAX() {
@@ -51,6 +51,7 @@ export default function ChatMAX() {
 
     const chatEndRef = useRef(null);
     const textareaRef = useRef(null);
+    const isLoadingConv = useRef(false);
     const [placeholder] = useState("Ask questions about your document");
 
     useEffect(() => {
@@ -75,13 +76,50 @@ export default function ChatMAX() {
 
     useEffect(() => { loadConversations(); }, [loadConversations]);
 
+    // ─── Debounced auto-save settings to MongoDB ──────────────────────────
+    useEffect(() => {
+        if (!activeConvId || isLoadingConv.current) return;
+        const timer = setTimeout(() => {
+            updateSettings(activeConvId, {
+                system_prompt: systemPrompt,
+                temperature,
+                top_k: topK,
+                top_p: topP,
+                max_tokens: parseInt(maxTokens, 10) || 800,
+                chunk_size: parseInt(chunkSize, 10) || 512,
+                chunk_overlap: parseInt(chunkOverlap, 10) || 50,
+                uploaded_file: uploadedFile || null,
+                gen_llm: genLLM || null,
+                embed_llm: embedLLM || null,
+            }).catch(err => console.error('Failed to save settings:', err));
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [activeConvId, systemPrompt, temperature, topK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
+
     const loadConversation = async (convId) => {
         try {
+            isLoadingConv.current = true;
             const conv = await fetchConversation(convId);
             setMessages(conv.messages || []);
             setActiveConvId(convId);
+
+            // Restore saved settings
+            const s = conv.settings || {};
+            if (s.system_prompt != null) setSystemPrompt(s.system_prompt);
+            if (s.temperature != null) setTemperature(s.temperature);
+            if (s.top_k != null) setTopK(s.top_k);
+            if (s.top_p != null) setTopP(s.top_p);
+            if (s.max_tokens != null) setMaxTokens(String(s.max_tokens));
+            if (s.chunk_size != null) setChunkSize(s.chunk_size);
+            if (s.chunk_overlap != null) setChunkOverlap(s.chunk_overlap);
+            if (s.uploaded_file != null) setUploadedFile(s.uploaded_file);
+            if (s.gen_llm != null) setGenLLM(s.gen_llm);
+            if (s.embed_llm != null) setEmbedLLM(s.embed_llm);
         } catch (e) {
             console.error('Failed to load conversation:', e);
+        } finally {
+            // Allow debounced save to re-enable after state settles
+            setTimeout(() => { isLoadingConv.current = false; }, 600);
         }
     };
 
@@ -90,6 +128,13 @@ export default function ChatMAX() {
         setActiveConvId(null);
         setInputValue('');
         setUploadedFile(null);
+        setSystemPrompt('You are a concise chat assistant.');
+        setTemperature(1.0);
+        setTopK(5);
+        setTopP(0.8);
+        setMaxTokens('800');
+        setChunkSize(512);
+        setChunkOverlap(50);
     };
 
     const handleDeleteConversation = async (convId) => {
@@ -284,13 +329,14 @@ export default function ChatMAX() {
                                         </select>
                                     </div>
 
-                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
+                                    <div className={`relative w-full h-[90px] rounded-xl flex items-center justify-center border transition-colors shadow-sm overflow-hidden ${uploadedFile ? 'bg-[#222222] border-gray-700/50 opacity-40 cursor-not-allowed' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50 cursor-pointer group'}`}>
                                         <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
                                             embedLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
                                         }`}>Embedding LLM</span>
                                         <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
                                             embedLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
                                         }`}>{embedLLM}</span>
+                                        {!uploadedFile && (
                                         <select
                                             value={embedLLM}
                                             onChange={e => setEmbedLLM(e.target.value)}
@@ -301,6 +347,7 @@ export default function ChatMAX() {
                                                 <option key={m} value={m}>{m}</option>
                                             ))}
                                         </select>
+                                        )}
                                     </div>
                                 </div>
 
@@ -386,6 +433,9 @@ export default function ChatMAX() {
                 setChunkSize={setChunkSize}
                 chunkOverlap={chunkOverlap}
                 setChunkOverlap={setChunkOverlap}
+                genLLM={genLLM}
+                setGenLLM={setGenLLM}
+                generationLLMs={llmConfig.generation_llms}
             />
         </div>
     );

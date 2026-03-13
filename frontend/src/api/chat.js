@@ -49,3 +49,12 @@ export const fetchConversation = (convId) =>
 
 export const deleteConversation = (convId) =>
     fetch(`${API_URL}/api/conversations/${convId}`, { method: 'DELETE' }).then(handleResponse);
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+export const updateSettings = (convId, settings) =>
+    fetch(`${API_URL}/api/conversations/${convId}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+    }).then(handleResponse);

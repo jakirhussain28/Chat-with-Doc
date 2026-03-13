@@ -49,6 +49,18 @@ class ChatRequest(BaseModel):
     top_p: Optional[float] = 0.8
     max_tokens: Optional[int] = 800
 
+class SettingsUpdate(BaseModel):
+    system_prompt: Optional[str] = None
+    temperature: Optional[float] = None
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
+    max_tokens: Optional[int] = None
+    chunk_size: Optional[int] = None
+    chunk_overlap: Optional[int] = None
+    uploaded_file: Optional[str] = None
+    gen_llm: Optional[str] = None
+    embed_llm: Optional[str] = None
+
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
 @app.post("/api/upload")
@@ -65,6 +77,7 @@ async def upload_document(
             "user_id": "default_user", 
             "title": f"Doc: {file.filename[:20]}",
             "messages": [],
+            "settings": {},
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -99,6 +112,7 @@ async def chat_endpoint(req: ChatRequest):
             "user_id": req.user_id,
             "title": req.message[:30] + "..." if len(req.message) > 30 else req.message,
             "messages": [],
+            "settings": {},
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -199,8 +213,24 @@ async def get_conversation(conv_id: str):
     
     return {
         "_id": str(doc["_id"]),
-        "messages": doc.get("messages", [])
+        "messages": doc.get("messages", []),
+        "settings": doc.get("settings", {})
     }
+
+@app.put("/api/conversations/{conv_id}/settings")
+async def update_settings(conv_id: str, settings: SettingsUpdate):
+    payload = {k: v for k, v in settings.model_dump().items() if v is not None}
+    if not payload:
+        return {"success": True}
+    update_fields = {f"settings.{k}": v for k, v in payload.items()}
+    update_fields["updated_at"] = datetime.utcnow()
+    res = await conversations_col.update_one(
+        {"_id": ObjectId(conv_id)},
+        {"$set": update_fields}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"success": True}
 
 @app.delete("/api/conversations/{conv_id}")
 async def delete_conversation(conv_id: str):
