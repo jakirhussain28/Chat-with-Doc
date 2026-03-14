@@ -28,7 +28,7 @@ export default function HistorySidebar({
                         className="px-4 py-3 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full"
                         onClick={() => document.getElementById('chat-file-input')?.click()}
                     >
-                        {uploadedFile || 'No File Uploaded'}
+                        {uploadedFile || 'No File Selected'}
                     </span>
                 </div>
 

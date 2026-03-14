@@ -4,6 +4,7 @@ import { CiChat1 } from "react-icons/ci";
 import HistorySidebar from './Settings.jsx';
 import ChatBubble from './ChatBubble.jsx';
 import Sidebar from './Sidebar.jsx'; // Imported Sidebar
+import ProfileOverlay from './ProfileOverlay.jsx';
 import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument, updateSettings } from '../api/chat';
 import llmConfig from '../config/llm_config.json';
 
@@ -14,8 +15,8 @@ export default function ChatMAX() {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
-    useEffect(() => { 
-        localStorage.setItem('isSidebarOpen', JSON.stringify(isSidebarOpen)); 
+    useEffect(() => {
+        localStorage.setItem('isSidebarOpen', JSON.stringify(isSidebarOpen));
     }, [isSidebarOpen]);
 
     const [messages, setMessages] = useState([]);
@@ -24,6 +25,7 @@ export default function ChatMAX() {
     const [conversations, setConversations] = useState([]);
     const [activeConvId, setActiveConvId] = useState(null);
     const [historyOpen, setHistoryOpen] = useState(true);
+    const [profileOpen, setProfileOpen] = useState(false);
 
     const [genLLM, setGenLLM] = useState(() => localStorage.getItem('genLLM') || '');
     const [embedLLM, setEmbedLLM] = useState(() => localStorage.getItem('embedLLM') || '');
@@ -148,15 +150,15 @@ export default function ChatMAX() {
     };
 
     const handleFileClick = () => document.getElementById('chat-file-input')?.click();
-    
+
     const handleFileChange = async (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            
+
             if (!embedLLM) {
                 setShowEmbedAlert(true);
                 setTimeout(() => setShowEmbedAlert(false), 3000);
-                e.target.value = null; 
+                e.target.value = null;
                 return;
             }
 
@@ -165,10 +167,10 @@ export default function ChatMAX() {
                 const res = await uploadDocument(file, activeConvId, chunkSize, chunkOverlap, embedLLM);
                 setUploadedFile(file.name);
                 setHistoryOpen(true);
-                
+
                 if (res.conversation_id && !activeConvId) {
                     setActiveConvId(res.conversation_id);
-                    loadConversations(); 
+                    loadConversations();
                 }
             } catch (err) {
                 console.error("Upload failed", err);
@@ -176,7 +178,7 @@ export default function ChatMAX() {
                 setUploadedFile(null);
             } finally {
                 setIsUploading(false);
-                e.target.value = null; 
+                e.target.value = null;
             }
         }
     };
@@ -287,6 +289,7 @@ export default function ChatMAX() {
                 onSelect={loadConversation}
                 onDelete={handleDeleteConversation}
                 onNewChat={handleNewChat}
+                onProfileClick={() => setProfileOpen(true)}
             />
 
             {showLlmAlert && (
@@ -311,12 +314,10 @@ export default function ChatMAX() {
                             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-6">
                                 <div className="flex flex-col gap-4">
                                     <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
-                                        <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
-                                            genLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
-                                        }`}>Generation LLM</span>
-                                        <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
-                                            genLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                                        }`}>{genLLM}</span>
+                                        <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${genLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
+                                            }`}>Generation LLM</span>
+                                        <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${genLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                                            }`}>{genLLM}</span>
                                         <select
                                             value={genLLM}
                                             onChange={e => setGenLLM(e.target.value)}
@@ -330,23 +331,21 @@ export default function ChatMAX() {
                                     </div>
 
                                     <div className={`relative w-full h-[90px] rounded-xl flex items-center justify-center border transition-colors shadow-sm overflow-hidden ${uploadedFile ? 'bg-[#222222] border-gray-700/50 opacity-40 cursor-not-allowed' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50 cursor-pointer group'}`}>
-                                        <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${
-                                            embedLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
-                                        }`}>Embedding LLM</span>
-                                        <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${
-                                            embedLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-                                        }`}>{embedLLM}</span>
+                                        <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${embedLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
+                                            }`}>Embedding LLM</span>
+                                        <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${embedLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+                                            }`}>{embedLLM}</span>
                                         {!uploadedFile && (
-                                        <select
-                                            value={embedLLM}
-                                            onChange={e => setEmbedLLM(e.target.value)}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        >
-                                            <option value="" disabled>Embedding LLM</option>
-                                            {llmConfig.embedding_llms.map(m => (
-                                                <option key={m} value={m}>{m}</option>
-                                            ))}
-                                        </select>
+                                            <select
+                                                value={embedLLM}
+                                                onChange={e => setEmbedLLM(e.target.value)}
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            >
+                                                <option value="" disabled>Embedding LLM</option>
+                                                {llmConfig.embedding_llms.map(m => (
+                                                    <option key={m} value={m}>{m}</option>
+                                                ))}
+                                            </select>
                                         )}
                                     </div>
                                 </div>
@@ -355,9 +354,8 @@ export default function ChatMAX() {
                                     <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.docx,.csv" />
                                     <div
                                         onClick={handleFileClick}
-                                        className={`relative w-full h-full rounded-xl flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${
-                                            isUploading ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
-                                        }`}
+                                        className={`relative w-full h-full rounded-xl flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${isUploading ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
+                                            }`}
                                     >
                                         <div className="flex gap-4 items-start">
                                             <CiChat1 className="w-8 h-8 text-gray-500 -mt-0.5" />
@@ -367,7 +365,7 @@ export default function ChatMAX() {
                                         </div>
                                         <div className="absolute bottom-6 left-0 right-0 text-center">
                                             <span className="text-sm text-gray-500 font-thin tracking-wide">
-                                                {uploadedFile || 'Upload PDF, Doc, Text, CSV'}
+                                                {uploadedFile || 'Select PDF, Doc, Text, CSV'}
                                             </span>
                                         </div>
                                     </div>
@@ -436,6 +434,11 @@ export default function ChatMAX() {
                 genLLM={genLLM}
                 setGenLLM={setGenLLM}
                 generationLLMs={llmConfig.generation_llms}
+            />
+
+            <ProfileOverlay 
+                isOpen={profileOpen} 
+                onClose={() => setProfileOpen(false)} 
             />
         </div>
     );

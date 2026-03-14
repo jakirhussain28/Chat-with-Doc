@@ -4,7 +4,7 @@ import { LuHistory } from "react-icons/lu";
 import { IoAdd, IoTrashOutline } from 'react-icons/io5';
 import { AiOutlineProfile } from "react-icons/ai";
 
-export default function Sidebar({ isOpen, toggleSidebar, conversations = [], activeId, onSelect, onDelete, onNewChat }) {
+export default function Sidebar({ isOpen, toggleSidebar, conversations = [], activeId, onSelect, onDelete, onNewChat, onProfileClick }) {
   return (
     <aside
       className={`relative z-30 flex flex-col h-screen bg-secondary/70 backdrop-blur-sm text-[15px] border-r border-[#413c4b] transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[280px] min-w-[280px]' : 'w-[50px] min-w-[50px]'}`}
@@ -74,7 +74,10 @@ export default function Sidebar({ isOpen, toggleSidebar, conversations = [], act
 
       {/* Profile section at the bottom */}
       <div className="relative mt-auto after:content-[''] after:absolute after:top-0 after:left-[10px] after:right-[10px] after:h-[1px] after:bg-[rgb(65,60,75)]">
-        <div className={`flex items-center h-[52px] overflow-hidden pl-[14px] cursor-pointer hover:bg-[rgba(73,66,85,0.2)] transition-colors`}>
+        <div 
+          onClick={onProfileClick}
+          className={`flex items-center h-[52px] overflow-hidden pl-[14px] cursor-pointer hover:bg-[rgba(73,66,85,0.2)] transition-colors`}
+        >
           <AiOutlineProfile className="h-5 w-5 flex-shrink-0 text-gray-400" />
           <span className={`whitespace-nowrap overflow-hidden transition-[width,opacity,margin] duration-300 ease-in-out text-gray-400 text-sm font-medium ${isOpen ? 'w-auto opacity-100 ml-3' : 'w-0 opacity-0 ml-0'}`} style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>Profile</span>
         </div>
