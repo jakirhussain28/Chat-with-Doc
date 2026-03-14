@@ -112,7 +112,7 @@ export default function ChatMAX() {
             if (s.max_tokens != null) setMaxTokens(String(s.max_tokens));
             if (s.chunk_size != null) setChunkSize(s.chunk_size);
             if (s.chunk_overlap != null) setChunkOverlap(s.chunk_overlap);
-            if (s.uploaded_file != null) setUploadedFile(s.uploaded_file);
+            setUploadedFile(s.uploaded_file || null);
             if (s.gen_llm != null) setGenLLM(s.gen_llm);
             if (s.embed_llm != null) setEmbedLLM(s.embed_llm);
         } catch (e) {
