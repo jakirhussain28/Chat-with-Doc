@@ -3,19 +3,33 @@ import { IoSend } from 'react-icons/io5';
 import { CiChat1 } from "react-icons/ci";
 import HistorySidebar from './Settings.jsx';
 import ChatBubble from './ChatBubble.jsx';
-import Sidebar from './Sidebar.jsx'; // Imported Sidebar
-import Profile from './Profile.jsx'; // Imported Profile
-import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument, updateSettings } from '../api/chat';
-import llmConfig from '../config/llm_config.json';
+import Sidebar from './Sidebar.jsx';
+import Profile from './Profile.jsx';
+// REMOVED static import of llmConfig
+import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument, updateSettings, fetchConfig } from '../api/chat';
 
 export default function ChatMAX() {
+    // ─── Dynamic Config State ────────────────────────────────────────────────
+    const [llmConfig, setLlmConfig] = useState({ generation_llms: [], embedding_llms: [] });
+
+    useEffect(() => {
+        const loadConfig = async () => {
+            try {
+                const data = await fetchConfig();
+                setLlmConfig(data);
+            } catch (error) {
+                console.error("Failed to load LLM config:", error);
+            }
+        };
+        loadConfig();
+    }, []);
+
     // Sidebar & Profile State
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
         const saved = localStorage.getItem('isSidebarOpen');
         return saved !== null ? JSON.parse(saved) : true;
     });
 
-    // New state for Profile modal
     const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     useEffect(() => {
@@ -107,7 +121,6 @@ export default function ChatMAX() {
             setMessages(conv.messages || []);
             setActiveConvId(convId);
 
-            // Restore saved settings
             const s = conv.settings || {};
             if (s.system_prompt != null) setSystemPrompt(s.system_prompt);
             if (s.temperature != null) setTemperature(s.temperature);
@@ -122,7 +135,6 @@ export default function ChatMAX() {
         } catch (e) {
             console.error('Failed to load conversation:', e);
         } finally {
-            // Allow debounced save to re-enable after state settles
             setTimeout(() => { isLoadingConv.current = false; }, 600);
         }
     };
@@ -282,12 +294,10 @@ export default function ChatMAX() {
     return (
         <div className="flex h-full w-full overflow-hidden relative">
 
-            {/* Profile Modal Rendered Here */}
             {isProfileOpen && (
                 <Profile onClose={() => setIsProfileOpen(false)} />
             )}
 
-            {/* Left Sidebar Added Here */}
             <Sidebar
                 isOpen={isSidebarOpen}
                 toggleSidebar={() => setIsSidebarOpen(o => !o)}

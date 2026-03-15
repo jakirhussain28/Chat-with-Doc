@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { IoTrashOutline } from 'react-icons/io5';
+import React, { useState, useEffect } from 'react';
+import { IoTrashOutline, IoSaveOutline } from 'react-icons/io5';
+import { fetchConfig, updateConfig } from '../api/chat';
 
 export default function Profile({ onClose }) {
     // Local state to manage form inputs based on the screenshot mockup
@@ -7,8 +8,51 @@ export default function Profile({ onClose }) {
     const [ollamaURL, setOllamaURL] = useState('');
 
     // Managing lists of dynamic LLM entries
-    const [genLLMs, setGenLLMs] = useState([{ id: 1, value: '' }]);
-    const [embedLLMs, setEmbedLLMs] = useState([{ id: 1, value: '' }]);
+    const [genLLMs, setGenLLMs] = useState([]);
+    const [embedLLMs, setEmbedLLMs] = useState([]);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const config = await fetchConfig();
+                setMongoURI(config.mongodb_uri_local || '');
+                setOllamaURL(config.ollama_url_local || '');
+
+                if (config.generation_llms) {
+                    setGenLLMs(config.generation_llms.map((val, i) => ({ id: Date.now() + i, value: val })));
+                }
+                if (config.embedding_llms) {
+                    setEmbedLLMs(config.embedding_llms.map((val, i) => ({ id: Date.now() + i + 100, value: val })));
+                }
+            } catch (err) {
+                console.error("Failed to load config:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadSettings();
+    }, []);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const newConfig = {
+                mongodb_uri_local: mongoURI,
+                ollama_url_local: ollamaURL,
+                generation_llms: genLLMs.map(llm => llm.value).filter(val => val.trim() !== ''),
+                embedding_llms: embedLLMs.map(llm => llm.value).filter(val => val.trim() !== '')
+            };
+            await updateConfig(newConfig);
+            onClose(); // Close modal on success
+        } catch (err) {
+            console.error("Failed to save config:", err);
+            alert("Failed to save settings. Please ensure backend is running.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     // Close the modal if clicking outside the main content box
     const handleBackdropClick = (e) => {
@@ -40,106 +84,123 @@ export default function Profile({ onClose }) {
         >
             <div className="bg-[#1a1b20] border border-[#3b4154] w-[750px] h-[600px] rounded-md p-8 shadow-2xl flex flex-col gap-8 text-gray-300 font-sans overflow-hidden">
 
-                {/* Connection Settings */}
-                <div className="flex flex-col gap-5">
-                    <div className="flex items-center">
-                        <label className="text-gray-400 font-medium w-48 shrink-0">MongoDB URI Local</label>
-                        <input
-                            type="text"
-                            value={mongoURI}
-                            onChange={(e) => setMongoURI(e.target.value)}
-                            placeholder="value"
-                            className="flex-1 bg-[#0a0a0a] border border-[#1f2025] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#4b5563]"
-                        />
-                        <button className="ml-4 bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-4 py-1.5 rounded-md font-medium text-sm">
-                            Done
-                        </button>
+                {isLoading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#5cb58a]"></div>
                     </div>
-
-                    <div className="flex items-center">
-                        <label className="text-gray-400 font-medium w-48 shrink-0">Ollama URL Local</label>
-                        <input
-                            type="text"
-                            value={ollamaURL}
-                            onChange={(e) => setOllamaURL(e.target.value)}
-                            placeholder="value"
-                            className="flex-1 bg-[#0a0a0a] border border-[#1f2025] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#4b5563]"
-                        />
-                        <button className="ml-4 bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-4 py-1.5 rounded-md font-medium text-sm">
-                            Done
-                        </button>
-                    </div>
-                </div>
-
-                {/* Entries Section */}
-                <div className="flex-1 flex flex-col min-h-0">
-                    <div className="flex items-center gap-4 pb-4 mb-4 border-b border-[#3b4154]">
-                        <h3 className="text-xl font-semibold text-gray-200 w-44">Entries</h3>
-                        <button
-                            onClick={handleAddGenLLM}
-                            className="bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-4 py-1 rounded-md font-medium text-sm"
-                        >
-                            Add Gen LLM
-                        </button>
-                        <button
-                            onClick={handleAddEmbedLLM}
-                            className="bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-4 py-1 rounded-md font-medium text-sm"
-                        >
-                            Add Embed LLM
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-                        {/* Gen LLM List */}
-                        {genLLMs.map((llm, index) => (
-                            <div key={`gen-${llm.id}`} className="flex items-center pl-4">
-                                <label className="text-gray-400 text-sm w-40 shrink-0">Gen LLM</label>
+                ) : (
+                    <>
+                        {/* Connection Settings */}
+                        <div className="flex flex-col gap-5">
+                            <div className="flex items-center">
+                                <label className="text-gray-400 font-medium w-48 shrink-0">MongoDB URI Local</label>
                                 <input
                                     type="text"
-                                    value={llm.value}
-                                    onChange={(e) => {
-                                        const newLLMs = [...genLLMs];
-                                        newLLMs[index].value = e.target.value;
-                                        setGenLLMs(newLLMs);
-                                    }}
-                                    placeholder="value"
+                                    value={mongoURI}
+                                    onChange={(e) => setMongoURI(e.target.value)}
+                                    placeholder="mongodb://localhost:27017"
                                     className="flex-1 bg-[#0a0a0a] border border-[#1f2025] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#4b5563]"
                                 />
-                                <button
-                                    onClick={() => handleRemoveGenLLM(llm.id)}
-                                    className="ml-4 bg-[#243144] text-[#6d93c7] border border-[#2d3d54] hover:text-red-400 hover:bg-[#2a3a50] transition-colors p-2 rounded-md"
-                                >
-                                    <IoTrashOutline className="w-4 h-4" />
-                                </button>
                             </div>
-                        ))}
 
-                        {/* Embed LLM List */}
-                        {embedLLMs.map((llm, index) => (
-                            <div key={`embed-${llm.id}`} className="flex items-center pl-4">
-                                <label className="text-gray-400 text-sm w-40 shrink-0">Embed LLM</label>
+                            <div className="flex items-center">
+                                <label className="text-gray-400 font-medium w-48 shrink-0">Ollama URL Local</label>
                                 <input
                                     type="text"
-                                    value={llm.value}
-                                    onChange={(e) => {
-                                        const newLLMs = [...embedLLMs];
-                                        newLLMs[index].value = e.target.value;
-                                        setEmbedLLMs(newLLMs);
-                                    }}
-                                    placeholder="value"
+                                    value={ollamaURL}
+                                    onChange={(e) => setOllamaURL(e.target.value)}
+                                    placeholder="http://localhost:11434"
                                     className="flex-1 bg-[#0a0a0a] border border-[#1f2025] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#4b5563]"
                                 />
+                            </div>
+                        </div>
+
+                        {/* Entries Section */}
+                        <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex items-center gap-4 pb-4 mb-4 border-b border-[#3b4154]">
+                                <h3 className="text-xl font-semibold text-gray-200 w-44">Entries</h3>
                                 <button
-                                    onClick={() => handleRemoveEmbedLLM(llm.id)}
-                                    className="ml-4 bg-[#243144] text-[#6d93c7] border border-[#2d3d54] hover:text-red-400 hover:bg-[#2a3a50] transition-colors p-2 rounded-md"
+                                    onClick={handleAddGenLLM}
+                                    className="bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-4 py-1 rounded-md font-medium text-sm"
                                 >
-                                    <IoTrashOutline className="w-4 h-4" />
+                                    Add Gen LLM
+                                </button>
+                                <button
+                                    onClick={handleAddEmbedLLM}
+                                    className="bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-4 py-1 rounded-md font-medium text-sm"
+                                >
+                                    Add Embed LLM
                                 </button>
                             </div>
-                        ))}
-                    </div>
-                </div>
 
+                            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                                {/* Gen LLM List */}
+                                {genLLMs.map((llm, index) => (
+                                    <div key={`gen-${llm.id}`} className="flex items-center pl-4">
+                                        <label className="text-gray-400 text-sm w-40 shrink-0">Gen LLM</label>
+                                        <input
+                                            type="text"
+                                            value={llm.value}
+                                            onChange={(e) => {
+                                                const newLLMs = [...genLLMs];
+                                                newLLMs[index].value = e.target.value;
+                                                setGenLLMs(newLLMs);
+                                            }}
+                                            placeholder="value"
+                                            className="flex-1 bg-[#0a0a0a] border border-[#1f2025] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#4b5563]"
+                                        />
+                                        <button
+                                            onClick={() => handleRemoveGenLLM(llm.id)}
+                                            className="ml-4 bg-[#243144] text-[#6d93c7] border border-[#2d3d54] hover:text-red-400 hover:bg-[#2a3a50] transition-colors p-2 rounded-md"
+                                        >
+                                            <IoTrashOutline className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+
+                                {/* Embed LLM List */}
+                                {embedLLMs.map((llm, index) => (
+                                    <div key={`embed-${llm.id}`} className="flex items-center pl-4">
+                                        <label className="text-gray-400 text-sm w-40 shrink-0">Embed LLM</label>
+                                        <input
+                                            type="text"
+                                            value={llm.value}
+                                            onChange={(e) => {
+                                                const newLLMs = [...embedLLMs];
+                                                newLLMs[index].value = e.target.value;
+                                                setEmbedLLMs(newLLMs);
+                                            }}
+                                            placeholder="value"
+                                            className="flex-1 bg-[#0a0a0a] border border-[#1f2025] rounded-md px-3 py-2 text-sm focus:outline-none focus:border-[#4b5563]"
+                                        />
+                                        <button
+                                            onClick={() => handleRemoveEmbedLLM(llm.id)}
+                                            className="ml-4 bg-[#243144] text-[#6d93c7] border border-[#2d3d54] hover:text-red-400 hover:bg-[#2a3a50] transition-colors p-2 rounded-md"
+                                        >
+                                            <IoTrashOutline className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Footer / Global Actions */}
+                        <div className="mt-auto pt-4 border-t border-[#3b4154] flex justify-end">
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                className="flex items-center bg-[#21352b] text-[#5cb58a] hover:bg-[#2a4034] border border-[#2c4538] transition-colors px-6 py-2 rounded-md font-semibold disabled:opacity-50"
+                            >
+                                {isSaving ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-[#5cb58a] mr-2"></div>
+                                ) : (
+                                    <IoSaveOutline className="w-5 h-5 mr-2" />
+                                )}
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

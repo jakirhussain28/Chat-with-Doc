@@ -9,20 +9,37 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
-from dotenv import load_dotenv
 import uvicorn
 
 from rag_engine import process_document, query_context
 
-# Load environment variables
-load_dotenv()
+# ─── Configuration Loader ─────────────────────────────────────────────────────
+
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "profile_config.json")
+
+def load_profile_config():
+    """Loads the LLM configuration from the JSON file."""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("Warning: profile_config.json not found. Using defaults.")
+        return {
+            "mongodb_uri_local": "mongodb://localhost:27017",
+            "ollama_url_local": "http://localhost:11434",
+            "generation_llms": [],
+            "embedding_llms": []
+        }
+
+# Initial load for global setup
+app_config = load_profile_config()
 
 app = FastAPI()
 
 # Enable CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -30,7 +47,8 @@ app.add_middleware(
 
 # ─── MongoDB Setup ────────────────────────────────────────────────────────────
 
-MONGO_URI = os.getenv("MONGODB_URI_LOCAL")
+# Uses config file first, falls back to default if config key is missing
+MONGO_URI = app_config.get("mongodb_uri_local", "mongodb://localhost:27017")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["chatdox_db"]
 conversations_col = db["conversations"]
@@ -42,7 +60,7 @@ class ChatRequest(BaseModel):
     user_id: str
     conversation_id: Optional[str] = None
     model: Optional[str] = "llama3:instruct"
-    embed_model: Optional[str] = None  # Added embed_model
+    embed_model: Optional[str] = None
     system_prompt: Optional[str] = None
     temperature: Optional[float] = 1.0
     top_k: Optional[int] = 5
@@ -63,6 +81,26 @@ class SettingsUpdate(BaseModel):
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 
+@app.get("/api/config")
+async def get_config():
+    """Serves the LLM configuration to the frontend dynamically."""
+    return load_profile_config()
+
+@app.put("/api/config")
+async def update_config(new_config: dict):
+    """Updates the LLM configuration in profile_config.json."""
+    try:
+        with open(CONFIG_PATH, "w") as f:
+            json.dump(new_config, f, indent=2)
+        
+        # Update in-memory configuration 
+        global app_config
+        app_config = load_profile_config()
+        
+        return {"success": True, "message": "Configuration updated"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/upload")
 async def upload_document(
     file: UploadFile = File(...),
@@ -71,7 +109,6 @@ async def upload_document(
     chunk_overlap: int = Form(50),
     embed_model: str = Form(...)
 ):
-    # 1. If no active conversation, create a new one to bind the file to
     if not conversation_id or conversation_id == "null":
         conv = {
             "user_id": "default_user", 
@@ -85,8 +122,6 @@ async def upload_document(
         conversation_id = str(res.inserted_id)
 
     collection_name = f"conv_{conversation_id}"
-    
-    # 2. Read and process the document
     content = await file.read()
     num_chunks = await process_document(
         content, file.filename, collection_name, 
@@ -102,7 +137,10 @@ async def upload_document(
 
 @app.post("/api/chat")
 async def chat_endpoint(req: ChatRequest):
-    # 1. Fetch existing conversation or create a new one
+    # Fetch latest config for Ollama URL in case it changed
+    current_config = load_profile_config()
+    ollama_base_url = current_config.get("ollama_url_local", "http://localhost:11434")
+
     if req.conversation_id:
         conv = await conversations_col.find_one({"_id": ObjectId(req.conversation_id)})
         if not conv:
@@ -120,8 +158,6 @@ async def chat_endpoint(req: ChatRequest):
         conv["_id"] = res.inserted_id
 
     conv_id_str = str(conv["_id"])
-
-    # 2. Save the user's message to MongoDB
     user_msg = {"role": "user", "content": req.message}
     await conversations_col.update_one(
         {"_id": ObjectId(conv_id_str)},
@@ -131,27 +167,22 @@ async def chat_endpoint(req: ChatRequest):
         }
     )
 
-    # Prepare message history for Ollama context
     messages_history = conv.get("messages", []) + [user_msg]
 
-    # 3. Retrieve Context from ChromaDB if an embedding model is provided
     if req.embed_model:
         collection_name = f"conv_{conv_id_str}"
         context = await query_context(req.message, collection_name, req.embed_model, top_k=req.top_k)
         
         if context:
-            # Inject context right before the user's latest query
             rag_instruction = f"Context information is below.\n---------------------\n{context}\n---------------------\nGiven the context information, answer the user's question."
             messages_history.insert(-1, {"role": "system", "content": rag_instruction})
 
-    # Inject the system prompt at the very beginning
     if req.system_prompt and req.system_prompt.strip():
         messages_history.insert(0, {"role": "system", "content": req.system_prompt.strip()})
 
-    # 4. Stream from Local Ollama
     async def event_generator():
         assistant_content = ""
-        ollama_url = "http://localhost:11434/api/chat"
+        ollama_url = f"{ollama_base_url}/api/chat"
         
         payload = {
             "model": req.model, 
@@ -179,7 +210,6 @@ async def chat_endpoint(req: ChatRequest):
                     except Exception as e:
                         print(f"Error parsing line: {e}")
 
-        # 5. Save the assistant's message to MongoDB
         assistant_msg = {"role": "assistant", "content": assistant_content}
         await conversations_col.update_one(
             {"_id": ObjectId(conv_id_str)},
@@ -189,7 +219,6 @@ async def chat_endpoint(req: ChatRequest):
             }
         )
 
-        # 6. Yield the done flag
         yield f"data: {json.dumps({'done': True, 'conversation_id': conv_id_str})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
@@ -235,7 +264,6 @@ async def update_settings(conv_id: str, settings: SettingsUpdate):
 @app.delete("/api/conversations/{conv_id}")
 async def delete_conversation(conv_id: str):
     res = await conversations_col.delete_one({"_id": ObjectId(conv_id)})
-    # Optional: You could also delete the ChromaDB collection here using chroma_client.delete_collection(name=f"conv_{conv_id}")
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return {"success": True}

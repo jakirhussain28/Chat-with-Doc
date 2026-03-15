@@ -28,14 +28,14 @@ export const sendChatMessage = (message, userId, conversationId = null, model = 
     fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            message, 
-            user_id: userId, 
-            conversation_id: conversationId, 
-            model, 
-            embed_model: embedModel, 
+        body: JSON.stringify({
+            message,
+            user_id: userId,
+            conversation_id: conversationId,
+            model,
+            embed_model: embedModel,
             system_prompt: systemPrompt,
-            ...options 
+            ...options
         }),
     });
 
@@ -57,4 +57,16 @@ export const updateSettings = (convId, settings) =>
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
+    }).then(handleResponse);
+
+// ─── Configuration ────────────────────────────────────────────────────────────
+
+export const fetchConfig = () =>
+    fetch(`${API_URL}/api/config`).then(handleResponse);
+
+export const updateConfig = (newConfig) =>
+    fetch(`${API_URL}/api/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newConfig),
     }).then(handleResponse);
