@@ -62,11 +62,11 @@ export default function Profile({ onClose }) {
     };
 
     const handleAddGenLLM = () => {
-        setGenLLMs([...genLLMs, { id: Date.now(), value: '' }]);
+        setGenLLMs([...genLLMs, { id: Date.now(), value: '', isNew: true }]);
     };
 
     const handleAddEmbedLLM = () => {
-        setEmbedLLMs([...embedLLMs, { id: Date.now(), value: '' }]);
+        setEmbedLLMs([...embedLLMs, { id: Date.now(), value: '', isNew: true }]);
     };
 
     const handleRemoveGenLLM = (idToRemove) => {
@@ -141,6 +141,7 @@ export default function Profile({ onClose }) {
                                         <input
                                             type="text"
                                             value={llm.value}
+                                            autoFocus={llm.isNew}
                                             onChange={(e) => {
                                                 const newLLMs = [...genLLMs];
                                                 newLLMs[index].value = e.target.value;
@@ -165,6 +166,7 @@ export default function Profile({ onClose }) {
                                         <input
                                             type="text"
                                             value={llm.value}
+                                            autoFocus={llm.isNew}
                                             onChange={(e) => {
                                                 const newLLMs = [...embedLLMs];
                                                 newLLMs[index].value = e.target.value;

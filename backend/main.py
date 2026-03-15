@@ -36,10 +36,16 @@ app_config = load_profile_config()
 
 app = FastAPI()
 
+origins = [
+    "https://chatdox.pages.dev",
+    "http://localhost:5000",
+    "http://localhost:5001"
+]
+
 # Enable CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
@@ -48,7 +54,7 @@ app.add_middleware(
 # ─── MongoDB Setup ────────────────────────────────────────────────────────────
 
 # Uses config file first, falls back to default if config key is missing
-MONGO_URI = app_config.get("mongodb_uri_local", "mongodb://localhost:27017")
+MONGO_URI = app_config.get("mongodb_uri_local")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["chatdox_db"]
 conversations_col = db["conversations"]
