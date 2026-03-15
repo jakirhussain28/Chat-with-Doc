@@ -372,7 +372,7 @@ export default function ChatMAX() {
                                         </div>
                                         <div className="absolute bottom-6 left-0 right-0 text-center">
                                             <span className="text-sm text-gray-500 font-thin tracking-wide">
-                                                {uploadedFile || 'Upload PDF, Doc, Text, CSV'}
+                                                {uploadedFile || 'Select PDF, Doc, Text, CSV'}
                                             </span>
                                         </div>
                                     </div>
