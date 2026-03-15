@@ -2,6 +2,9 @@ import os
 import tempfile
 import json
 from typing import List
+import chromadb
+import shutil
+import sqlite3
 
 # Langchain Imports
 from langchain_community.document_loaders import (
@@ -107,3 +110,43 @@ async def query_context(query: str, collection_name: str, embed_model: str, top_
     except Exception as e:
         print(f"Error querying Chroma via Langchain: {e}")
         return ""
+
+def delete_vector_collection(collection_name: str) -> bool:
+    """Deletes a ChromaDB collection and forcefully removes orphaned physical files."""
+    try:
+        # 1. Logically delete the collection from ChromaDB
+        client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
+        client.delete_collection(name=collection_name)
+        print(f"Successfully deleted ChromaDB collection metadata: {collection_name}")
+        
+    except Exception as e:
+        print(f"Notice: ChromaDB collection '{collection_name}' not found: {e}")
+        # We don't return False here, because we still want to run the physical cleanup
+        # in case there are orphaned files from previous failed deletions.
+        
+    # 2. Physically clean up orphaned UUID folders left behind by ChromaDB
+    try:
+        db_path = os.path.join(CHROMA_PERSIST_DIR, "chroma.sqlite3")
+        if os.path.exists(db_path):
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            # Get all active segment IDs (Chroma names its physical folders after these)
+            cursor.execute("SELECT id FROM segments WHERE scope = 'VECTOR'")
+            active_segment_ids = {row[0] for row in cursor.fetchall()}
+            conn.close()
+
+            # Iterate through the chroma_data directory
+            for item in os.listdir(CHROMA_PERSIST_DIR):
+                item_path = os.path.join(CHROMA_PERSIST_DIR, item)
+                
+                # Check if it's a UUID directory (36 chars, 4 dashes)
+                if os.path.isdir(item_path) and len(item) == 36 and item.count('-') == 4:
+                    if item not in active_segment_ids:
+                        shutil.rmtree(item_path, ignore_errors=True)
+                        print(f"Physically deleted orphaned Chroma segment folder: {item}")
+                        
+        return True
+    except Exception as e:
+        print(f"Error during physical Chroma file cleanup: {e}")
+        return False

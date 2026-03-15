@@ -11,7 +11,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 import uvicorn
 
-from rag_engine import process_document, query_context
+from rag_engine import process_document, query_context, delete_vector_collection
 
 # ─── Configuration Loader ─────────────────────────────────────────────────────
 
@@ -54,7 +54,7 @@ app.add_middleware(
 # ─── MongoDB Setup ────────────────────────────────────────────────────────────
 
 # Uses config file first, falls back to default if config key is missing
-MONGO_URI = app_config.get("mongodb_uri_local")
+MONGO_URI = app_config.get("mongodb_uri_local", "mongodb://localhost:27017")
 client = AsyncIOMotorClient(MONGO_URI)
 db = client["chatdox_db"]
 conversations_col = db["conversations"]
@@ -126,7 +126,12 @@ async def upload_document(
         }
         res = await conversations_col.insert_one(conv)
         conversation_id = str(res.inserted_id)
+    else:
+        # EXISTING CHAT: Purge the old document's vectors before embedding the new one
+        collection_name = f"conv_{conversation_id}"
+        delete_vector_collection(collection_name)
 
+    # Process and Embed the Document
     collection_name = f"conv_{conversation_id}"
     content = await file.read()
     num_chunks = await process_document(
@@ -269,9 +274,15 @@ async def update_settings(conv_id: str, settings: SettingsUpdate):
 
 @app.delete("/api/conversations/{conv_id}")
 async def delete_conversation(conv_id: str):
+    # 1. Delete from MongoDB
     res = await conversations_col.delete_one({"_id": ObjectId(conv_id)})
     if res.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # 2. Delete corresponding vector collection from ChromaDB
+    collection_name = f"conv_{conv_id}"
+    delete_vector_collection(collection_name)
+    
     return {"success": True}
 
 if __name__ == "__main__":
