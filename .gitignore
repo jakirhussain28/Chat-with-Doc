@@ -1,6 +1,7 @@
 check.jsx
 backend/venv
 backend/__pycache__
+__pycache__
 .DS_Store
 chroma_data
 chatdox-design.pptx

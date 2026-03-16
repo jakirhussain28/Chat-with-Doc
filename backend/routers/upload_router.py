@@ -1,0 +1,47 @@
+from fastapi import APIRouter, UploadFile, File, Form
+from typing import Optional
+from datetime import datetime
+
+from database import conversations_col
+from rag_engine import process_document, delete_vector_collection
+
+router = APIRouter(prefix="/api/upload", tags=["Upload"])
+
+@router.post("")
+async def upload_document(
+    file: UploadFile = File(...),
+    conversation_id: Optional[str] = Form(None),
+    chunk_size: int = Form(512),
+    chunk_overlap: int = Form(50),
+    embed_model: str = Form(...)
+):
+    if not conversation_id or conversation_id == "null":
+        conv = {
+            "user_id": "default_user", 
+            "title": f"Doc: {file.filename[:20]}",
+            "messages": [],
+            "settings": {},
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        res = await conversations_col.insert_one(conv)
+        conversation_id = str(res.inserted_id)
+    else:
+        # EXISTING CHAT: Purge the old document's vectors before embedding the new one
+        collection_name = f"conv_{conversation_id}"
+        delete_vector_collection(collection_name)
+
+    # Process and Embed the Document
+    collection_name = f"conv_{conversation_id}"
+    content = await file.read()
+    num_chunks = await process_document(
+        content, file.filename, collection_name, 
+        chunk_size, chunk_overlap, embed_model
+    )
+    
+    return {
+        "message": "Success", 
+        "chunks_processed": num_chunks, 
+        "filename": file.filename,
+        "conversation_id": conversation_id
+    }
