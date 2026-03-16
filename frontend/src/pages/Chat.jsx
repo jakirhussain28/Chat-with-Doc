@@ -5,7 +5,6 @@ import HistorySidebar from './Settings.jsx';
 import ChatBubble from './ChatBubble.jsx';
 import Sidebar from './Sidebar.jsx';
 import Profile from './Profile.jsx';
-// REMOVED static import of llmConfig
 import { sendChatMessage, fetchConversations, fetchConversation, deleteConversation, uploadDocument, updateSettings, fetchConfig } from '../api/chat';
 
 export default function ChatMAX() {
@@ -48,8 +47,9 @@ export default function ChatMAX() {
     const [uploadedFile, setUploadedFile] = useState(null);
 
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
-    const [temperature, setTemperature] = useState(1.0);
-    const [topK, setTopK] = useState(5);
+    const [temperature, setTemperature] = useState(0.7);
+    const [topK, setTopK] = useState(40); // Standard LLM Generation K
+    const [retrievalK, setRetrievalK] = useState(5); // Standard RAG Context K
     const [topP, setTopP] = useState(0.8);
     const [maxTokens, setMaxTokens] = useState('800');
     const [chunkSize, setChunkSize] = useState(512);
@@ -102,6 +102,7 @@ export default function ChatMAX() {
                 system_prompt: systemPrompt,
                 temperature,
                 top_k: topK,
+                retrieval_k: retrievalK,
                 top_p: topP,
                 max_tokens: parseInt(maxTokens, 10) || 800,
                 chunk_size: parseInt(chunkSize, 10) || 512,
@@ -112,7 +113,7 @@ export default function ChatMAX() {
             }).catch(err => console.error('Failed to save settings:', err));
         }, 500);
         return () => clearTimeout(timer);
-    }, [activeConvId, systemPrompt, temperature, topK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
+    }, [activeConvId, systemPrompt, temperature, topK, retrievalK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
 
     const loadConversation = async (convId) => {
         try {
@@ -125,6 +126,7 @@ export default function ChatMAX() {
             if (s.system_prompt != null) setSystemPrompt(s.system_prompt);
             if (s.temperature != null) setTemperature(s.temperature);
             if (s.top_k != null) setTopK(s.top_k);
+            if (s.retrieval_k != null) setRetrievalK(s.retrieval_k);
             if (s.top_p != null) setTopP(s.top_p);
             if (s.max_tokens != null) setMaxTokens(String(s.max_tokens));
             if (s.chunk_size != null) setChunkSize(s.chunk_size);
@@ -145,8 +147,9 @@ export default function ChatMAX() {
         setInputValue('');
         setUploadedFile(null);
         setSystemPrompt('You are a concise chat assistant.');
-        setTemperature(1.0);
-        setTopK(5);
+        setTemperature(0.7);
+        setTopK(40);
+        setRetrievalK(5);
         setTopP(0.8);
         setMaxTokens('800');
         setChunkSize(512);
@@ -223,7 +226,8 @@ export default function ChatMAX() {
         try {
             const options = {
                 temperature: temperature,
-                top_k: topK,
+                top_k: topK, // Sent to Ollama
+                retrieval_k: retrievalK, // Sent to our backend RAG engine
                 top_p: topP,
                 max_tokens: parseInt(maxTokens, 10) || 800
             };
@@ -316,7 +320,7 @@ export default function ChatMAX() {
             )}
 
             {showEmbedAlert && (
-                <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
                     <span className="font-medium text-sm tracking-wide">Please select an Embedding LLM for RAG Chat</span>
                 </div>
             )}
@@ -440,6 +444,8 @@ export default function ChatMAX() {
                 setTemperature={setTemperature}
                 topK={topK}
                 setTopK={setTopK}
+                retrievalK={retrievalK}
+                setRetrievalK={setRetrievalK}
                 topP={topP}
                 setTopP={setTopP}
                 maxTokens={maxTokens}

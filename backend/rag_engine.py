@@ -86,7 +86,8 @@ async def process_document(
         if os.path.exists(temp_filepath):
             os.remove(temp_filepath)
 
-async def query_context(query: str, collection_name: str, embed_model: str, top_k: int = 3) -> str:
+# UPDATED: Changed top_k to retrieval_k and default to 5
+async def query_context(query: str, collection_name: str, embed_model: str, retrieval_k: int = 5) -> str:
     """Retrieves relevant context from ChromaDB using Langchain."""
     embeddings = get_embedding_model(embed_model)
     
@@ -97,7 +98,8 @@ async def query_context(query: str, collection_name: str, embed_model: str, top_
     )
     
     try:
-        docs = vectorstore.similarity_search(query, k=top_k)
+        # UPDATED: Pass retrieval_k to the similarity_search k parameter
+        docs = vectorstore.similarity_search(query, k=retrieval_k)
         
         if not docs:
             return ""

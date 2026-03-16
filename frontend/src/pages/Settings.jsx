@@ -6,6 +6,7 @@ export default function HistorySidebar({
     systemPrompt, setSystemPrompt,
     temperature, setTemperature,
     topK, setTopK,
+    retrievalK, setRetrievalK,
     topP, setTopP,
     maxTokens, setMaxTokens,
     chunkSize, setChunkSize,
@@ -25,7 +26,7 @@ export default function HistorySidebar({
 
                 <div className={`flex items-center justify-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     <span
-                        className="px-4 py-3 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full"
+                        className="px-4 py-2 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full"
                         onClick={() => document.getElementById('chat-file-input')?.click()}
                     >
                         {uploadedFile || 'No File Selected'}
@@ -36,7 +37,7 @@ export default function HistorySidebar({
 
                 <div className={`flex-1 overflow-y-auto px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
-                    <div className={`mb-4 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <div className={`mb-3 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
                         <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Size</label>
                         <input
                             type="text"
@@ -48,7 +49,7 @@ export default function HistorySidebar({
                         />
                     </div>
 
-                    <div className={`mb-6 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <div className={`mb-4 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
                         <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Overlap</label>
                         <input
                             type="text"
@@ -77,7 +78,7 @@ export default function HistorySidebar({
                     <div>
                         <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-5 font-mono">GENERATION PARAMETERS</label>
 
-                        <div className="mb-6 relative">
+                        <div className="mb-4 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <label className="text-[#8ba0af] text-[13px] font-mono">Temperature</label>
                                 <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{Number(temperature).toFixed(1)}</span>
@@ -92,18 +93,41 @@ export default function HistorySidebar({
                             />
                         </div>
 
+                        {/* NEW: Retrieval K Slider */}
                         <div className="mb-6 relative">
                             <div className="flex justify-between items-center mb-0">
-                                <label className="text-[#8ba0af] text-[13px] font-mono">Top K</label>
+                                <div className="flex items-baseline gap-2">
+                                    <label className="text-[#8ba0af] text-[13px] font-mono">Retrieval K (RAG)</label>
+                                    <p className="text-[9px] text-gray-500 font-mono">Chunks fetched from DB</p>
+                                </div>
+                                <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{retrievalK}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1" max="20" step="1"
+                                value={retrievalK}
+                                onChange={(e) => setRetrievalK(parseInt(e.target.value, 10))}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-2"
+                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(retrievalK / 20) * 100}%, #2a303f ${(retrievalK / 20) * 100}%)` }}
+                            />
+                        </div>
+
+                        {/* UPDATED: Generation Top K Slider (Scale 0-100) */}
+                        <div className="mb-6 relative">
+                            <div className="flex justify-between items-center mb-0">
+                                <div className="flex items-baseline gap-2">
+                                    <label className="text-[#8ba0af] text-[13px] font-mono">Top K (Gen)</label>
+                                    <p className="text-[9px] text-gray-500 font-mono">Token sampling diversity</p>
+                                </div>
                                 <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{topK}</span>
                             </div>
                             <input
                                 type="range"
-                                min="0" max="20" step="1"
+                                min="0" max="100" step="1"
                                 value={topK}
                                 onChange={(e) => setTopK(parseInt(e.target.value, 10))}
-                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-3"
-                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(topK / 20) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-2"
+                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(topK / 100) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
                             />
                         </div>
 

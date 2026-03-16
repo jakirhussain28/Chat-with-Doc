@@ -48,7 +48,8 @@ async def chat_endpoint(req: ChatRequest):
 
     if req.embed_model:
         collection_name = f"conv_{conv_id_str}"
-        context = await query_context(req.message, collection_name, req.embed_model, top_k=req.top_k)
+        # UPDATED: Changed the kwarg from top_k=req.retrieval_k to retrieval_k=req.retrieval_k
+        context = await query_context(req.message, collection_name, req.embed_model, retrieval_k=req.retrieval_k)
         
         if context:
             rag_instruction = f"Context information is below.\n---------------------\n{context}\n---------------------\nGiven the context information, answer the user's question."
@@ -67,7 +68,7 @@ async def chat_endpoint(req: ChatRequest):
             "stream": True,
             "options": {
                 "temperature": req.temperature,
-                "top_k": req.top_k,
+                "top_k": req.top_k, # SEPARATED: Using generation top_k here
                 "top_p": req.top_p,
                 "num_predict": req.max_tokens 
             }
