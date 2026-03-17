@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { VscSettings } from "react-icons/vsc";
+import { GoSidebarExpand } from "react-icons/go";
 
 export default function HistorySidebar({
     conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile,
@@ -14,20 +15,28 @@ export default function HistorySidebar({
     chunkOverlap, setChunkOverlap,
     genLLM, setGenLLM, generationLLMs
 }) {
+    const [isPinned, setIsPinned] = useState(false);
+
     return (
         <div
-            className={`h-full flex flex-col bg-secondary/70 backdrop-blur-sm text-[15px] border-l border-[#413c4b] overflow-hidden transition-[width,min-width] duration-300 ease-in-out ${isOpen ? 'w-[330px] min-w-[330px]' : 'w-[50px] min-w-[50px]'}`}
-            onMouseEnter={() => !isOpen && onToggle()}
-            onMouseLeave={() => isOpen && onToggle()}
+            className={`h-full flex flex-col bg-secondary/70 backdrop-blur-sm text-[15px] border-l border-[#413c4b] overflow-hidden transition-[width,min-width] duration-300 ease-in-out ${isOpen || isPinned ? 'w-[330px] min-w-[330px]' : 'w-[50px] min-w-[50px]'}`}
+            onMouseEnter={() => !isOpen && !isPinned && onToggle()}
+            onMouseLeave={() => isOpen && !isPinned && onToggle()}
         >
             <div className="w-[330px] h-full flex flex-col">
                 <div className={`absolute top-0 left-0 w-[50px] h-[52px] flex items-center justify-center transition-opacity duration-300 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                     <VscSettings className="w-6 h-6 text-gray-400" />
                 </div>
 
-                <div className={`flex items-center justify-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div className={`flex items-center pt-3 pb-2 px-3 transition-opacity duration-300 ${isOpen || isPinned ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center -ml-1">
+                        <GoSidebarExpand
+                            className={`w-5 h-5 cursor-pointer transition-all duration-300 ${isPinned ? 'text-[rgb(3,145,147)]' : 'text-gray-400 hover:text-gray-400 opacity-100 hover:opacity-100'}`}
+                            onClick={() => setIsPinned(!isPinned)}
+                        />
+                    </div>
                     <span
-                        className="px-4 py-2 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full"
+                        className="px-4 py-2 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full flex-1"
                         onClick={() => document.getElementById('chat-file-input')?.click()}
                     >
                         {uploadedFile || 'No File Selected'}
@@ -38,28 +47,32 @@ export default function HistorySidebar({
 
                 <div className={`flex-1 overflow-y-auto px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
-                    <div className={`mb-3 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
-                        <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Size</label>
-                        <input
-                            type="text"
-                            placeholder="512"
-                            value={chunkSize}
-                            onChange={(e) => setChunkSize(e.target.value)}
-                            disabled={!!uploadedFile}
-                            className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed"
-                        />
-                    </div>
+                    <div className={`flex items-center gap-4 mb-4 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
+                        <div className="flex-1">
+                            <label className="block text-[#8ba0af] text-[12px] mb-1.5 font-mono whitespace-nowrap">Chunk Size</label>
+                            <input
+                                type="text"
+                                placeholder="512"
+                                value={chunkSize}
+                                onChange={(e) => setChunkSize(e.target.value)}
+                                disabled={!!uploadedFile}
+                                className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed text-center"
+                            />
+                        </div>
 
-                    <div className={`mb-4 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
-                        <label className="block text-[#8ba0af] text-[13px] mb-1.5 font-mono">Chunk Overlap</label>
-                        <input
-                            type="text"
-                            placeholder="50"
-                            value={chunkOverlap}
-                            onChange={(e) => setChunkOverlap(e.target.value)}
-                            disabled={!!uploadedFile}
-                            className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed"
-                        />
+                        <div className="w-[1px] h-10 bg-[#2a303f] self-end mb-2" />
+
+                        <div className="flex-1">
+                            <label className="block text-[#8ba0af] text-[12px] mb-1.5 font-mono whitespace-nowrap">Chunk Overlap</label>
+                            <input
+                                type="text"
+                                placeholder="50"
+                                value={chunkOverlap}
+                                onChange={(e) => setChunkOverlap(e.target.value)}
+                                disabled={!!uploadedFile}
+                                className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed text-center"
+                            />
+                        </div>
                     </div>
 
                     <div className="h-[1px] bg-[#2a303f] mb-4 w-[calc(100%+40px)] -ml-5" />
