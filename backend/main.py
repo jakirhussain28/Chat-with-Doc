@@ -10,6 +10,7 @@ app = FastAPI(title="ChatDOX RAG API")
 
 origins = [
     "https://chatdox.pages.dev",
+    "https://chat-dox.vercel.app",
     "http://localhost:5000",
     "http://localhost:5001"
 ]

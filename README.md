@@ -1,6 +1,7 @@
 #  ChatDOX : Local RAG Engine
 
-**Live Frontend:** [https://chatdox.pages.dev](https://chatdox.pages.dev)
+**Live1 Frontend:** [https://chatdox.pages.dev](https://chatdox.pages.dev) <br/>
+**Live2 Frontend:** [https://chat-dox.vercel.app](https://chat-dox.vercel.app)
 
 **ChatDOX** is a high-performance, local-first Retrieval-Augmented Generation (RAG) assistant. Built with **FastAPI** and **LangChain**, it allows users to chat with their documents (PDF, Docx, CSV, TXT) using entirely local LLMs via **Ollama**, ensuring 100% data privacy.
 
@@ -56,5 +57,5 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run FastAPI server
+# Run FastAPI server (strictly on port 3000)
 python3 main.py
