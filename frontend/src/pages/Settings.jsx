@@ -7,6 +7,7 @@ export default function HistorySidebar({
     temperature, setTemperature,
     topK, setTopK,
     retrievalK, setRetrievalK,
+    historyK, setHistoryK, // NEW
     topP, setTopP,
     maxTokens, setMaxTokens,
     chunkSize, setChunkSize,
@@ -93,8 +94,7 @@ export default function HistorySidebar({
                             />
                         </div>
 
-                        {/* NEW: Retrieval K Slider */}
-                        <div className="mb-6 relative">
+                        <div className="mb-4 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <div className="flex items-baseline gap-2">
                                     <label className="text-[#8ba0af] text-[13px] font-mono">Retrieval K (RAG)</label>
@@ -112,8 +112,26 @@ export default function HistorySidebar({
                             />
                         </div>
 
-                        {/* UPDATED: Generation Top K Slider (Scale 0-100) */}
-                        <div className="mb-6 relative">
+                        {/* NEW: History K Slider */}
+                        <div className="mb-4 relative">
+                            <div className="flex justify-between items-center mb-0">
+                                <div className="flex items-baseline gap-2">
+                                    <label className="text-[#8ba0af] text-[13px] font-mono">History (Messages)</label>
+                                    <p className="text-[9px] text-gray-500 font-mono">Past chat context</p>
+                                </div>
+                                <span className="text-[rgb(3,145,147)] font-mono font-bold text-[13px]">{historyK}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="0" max="50" step="2"
+                                value={historyK}
+                                onChange={(e) => setHistoryK(parseInt(e.target.value, 10))}
+                                className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-2"
+                                style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(historyK / 50) * 100}%, #2a303f ${(historyK / 50) * 100}%)` }}
+                            />
+                        </div>
+
+                        <div className="mb-4 relative">
                             <div className="flex justify-between items-center mb-0">
                                 <div className="flex items-baseline gap-2">
                                     <label className="text-[#8ba0af] text-[13px] font-mono">Top K (Gen)</label>

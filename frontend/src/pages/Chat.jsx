@@ -48,8 +48,9 @@ export default function ChatMAX() {
 
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
     const [temperature, setTemperature] = useState(0.7);
-    const [topK, setTopK] = useState(40); // Standard LLM Generation K
-    const [retrievalK, setRetrievalK] = useState(5); // Standard RAG Context K
+    const [topK, setTopK] = useState(40);
+    const [retrievalK, setRetrievalK] = useState(5);
+    const [historyK, setHistoryK] = useState(10); // NEW
     const [topP, setTopP] = useState(0.8);
     const [maxTokens, setMaxTokens] = useState('800');
     const [chunkSize, setChunkSize] = useState(512);
@@ -103,6 +104,7 @@ export default function ChatMAX() {
                 temperature,
                 top_k: topK,
                 retrieval_k: retrievalK,
+                history_k: historyK, // NEW
                 top_p: topP,
                 max_tokens: parseInt(maxTokens, 10) || 800,
                 chunk_size: parseInt(chunkSize, 10) || 512,
@@ -113,7 +115,7 @@ export default function ChatMAX() {
             }).catch(err => console.error('Failed to save settings:', err));
         }, 500);
         return () => clearTimeout(timer);
-    }, [activeConvId, systemPrompt, temperature, topK, retrievalK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
+    }, [activeConvId, systemPrompt, temperature, topK, retrievalK, historyK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
 
     const loadConversation = async (convId) => {
         try {
@@ -127,6 +129,7 @@ export default function ChatMAX() {
             if (s.temperature != null) setTemperature(s.temperature);
             if (s.top_k != null) setTopK(s.top_k);
             if (s.retrieval_k != null) setRetrievalK(s.retrieval_k);
+            if (s.history_k != null) setHistoryK(s.history_k); // NEW
             if (s.top_p != null) setTopP(s.top_p);
             if (s.max_tokens != null) setMaxTokens(String(s.max_tokens));
             if (s.chunk_size != null) setChunkSize(s.chunk_size);
@@ -150,6 +153,7 @@ export default function ChatMAX() {
         setTemperature(0.7);
         setTopK(40);
         setRetrievalK(5);
+        setHistoryK(10); // NEW
         setTopP(0.8);
         setMaxTokens('800');
         setChunkSize(512);
@@ -226,8 +230,9 @@ export default function ChatMAX() {
         try {
             const options = {
                 temperature: temperature,
-                top_k: topK, // Sent to Ollama
-                retrieval_k: retrievalK, // Sent to our backend RAG engine
+                top_k: topK,
+                retrieval_k: retrievalK,
+                history_k: historyK, // NEW
                 top_p: topP,
                 max_tokens: parseInt(maxTokens, 10) || 800
             };
@@ -446,6 +451,8 @@ export default function ChatMAX() {
                 setTopK={setTopK}
                 retrievalK={retrievalK}
                 setRetrievalK={setRetrievalK}
+                historyK={historyK}           // NEW
+                setHistoryK={setHistoryK}     // NEW
                 topP={topP}
                 setTopP={setTopP}
                 maxTokens={maxTokens}

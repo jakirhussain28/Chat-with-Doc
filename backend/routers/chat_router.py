@@ -44,11 +44,15 @@ async def chat_endpoint(req: ChatRequest):
         }
     )
 
-    messages_history = conv.get("messages", []) + [user_msg]
+    # Slice past messages based on history_k
+    past_messages = conv.get("messages", [])
+    if req.history_k is not None:
+        past_messages = past_messages[-req.history_k:] if req.history_k > 0 else []
+        
+    messages_history = past_messages + [user_msg]
 
     if req.embed_model:
         collection_name = f"conv_{conv_id_str}"
-        # UPDATED: Changed the kwarg from top_k=req.retrieval_k to retrieval_k=req.retrieval_k
         context = await query_context(req.message, collection_name, req.embed_model, retrieval_k=req.retrieval_k)
         
         if context:
@@ -68,7 +72,7 @@ async def chat_endpoint(req: ChatRequest):
             "stream": True,
             "options": {
                 "temperature": req.temperature,
-                "top_k": req.top_k, # SEPARATED: Using generation top_k here
+                "top_k": req.top_k, 
                 "top_p": req.top_p,
                 "num_predict": req.max_tokens 
             }

@@ -11,6 +11,7 @@ class ChatRequest(BaseModel):
     temperature: Optional[float] = 0.7
     top_k: Optional[int] = 40
     retrieval_k: Optional[int] = 5
+    history_k: Optional[int] = 10
     top_p: Optional[float] = 0.8
     max_tokens: Optional[int] = 800
 
@@ -19,6 +20,7 @@ class SettingsUpdate(BaseModel):
     temperature: Optional[float] = None
     top_k: Optional[int] = None
     retrieval_k: Optional[int] = None
+    history_k: Optional[int] = None
     top_p: Optional[float] = None
     max_tokens: Optional[int] = None
     chunk_size: Optional[int] = None
