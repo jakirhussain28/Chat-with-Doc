@@ -44,11 +44,21 @@ async def chat_endpoint(req: ChatRequest):
         }
     )
 
-    # Slice past messages based on history_k
+    # Hardened memory slicing logic
     past_messages = conv.get("messages", [])
     if req.history_k is not None:
-        past_messages = past_messages[-req.history_k:] if req.history_k > 0 else []
-        
+        if req.history_k > 0:
+            # 1. Force the number to be even (e.g., 5 becomes 4) to maintain pairs
+            effective_k = req.history_k - (req.history_k % 2)
+            past_messages = past_messages[-effective_k:] if effective_k > 0 else []
+            
+            # 2. Failsafe: Ensure the sliced history strictly starts with a 'user' role
+            # (In case the database had a failed generation and left an orphaned message)
+            if past_messages and past_messages[0].get("role") == "assistant":
+                past_messages = past_messages[1:]
+        else:
+            past_messages = []
+            
     messages_history = past_messages + [user_msg]
 
     if req.embed_model:
