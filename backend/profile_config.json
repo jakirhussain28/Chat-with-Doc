@@ -2,8 +2,8 @@
   "mongodb_uri_local": "mongodb://localhost:27017",
   "ollama_url_local": "http://localhost:11434",
   "generation_llms": [
-    "qwen3:4b-instruct-2507-q4_K_M",
     "llama3:instruct",
+    "qwen3:4b-instruct-2507-q4_K_M",
     "qwen3:4b",
     "gemma3:4b",
     "gemma3:1b"

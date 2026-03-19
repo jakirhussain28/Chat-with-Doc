@@ -50,7 +50,7 @@ export default function ChatMAX() {
     const [temperature, setTemperature] = useState(0.7);
     const [topK, setTopK] = useState(40);
     const [retrievalK, setRetrievalK] = useState(5);
-    const [historyK, setHistoryK] = useState(10); // NEW
+    const [historyK, setHistoryK] = useState(8); // NEW
     const [topP, setTopP] = useState(0.8);
     const [maxTokens, setMaxTokens] = useState('800');
     const [chunkSize, setChunkSize] = useState(512);
@@ -153,7 +153,7 @@ export default function ChatMAX() {
         setTemperature(0.7);
         setTopK(40);
         setRetrievalK(5);
-        setHistoryK(10); // NEW
+        setHistoryK(8); // NEW
         setTopP(0.8);
         setMaxTokens('800');
         setChunkSize(512);
