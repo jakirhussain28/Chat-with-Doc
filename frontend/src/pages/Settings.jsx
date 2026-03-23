@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { VscSettings } from "react-icons/vsc";
 import { GoSidebarExpand } from "react-icons/go";
+import { GiSettingsKnobs } from "react-icons/gi";
+
+export const PRESETS = {
+    "Precise": { temperature: 0.2, topP: 0.5, topK: 10, historyK: 4, retrievalK: 3 },
+    "Balanced": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 8, retrievalK: 5 },
+    "Creative": { temperature: 0.9, topP: 0.95, topK: 60, historyK: 10, retrievalK: 7 },
+    "Max Context": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 30, retrievalK: 15 },
+    "Custom": {}
+};
 
 export default function HistorySidebar({
     conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile,
     systemPrompt, setSystemPrompt,
+    preset, setPreset, // NEW
     temperature, setTemperature,
     topK, setTopK,
     retrievalK, setRetrievalK,
@@ -16,6 +26,19 @@ export default function HistorySidebar({
     genLLM, setGenLLM, generationLLMs
 }) {
     const [isPinned, setIsPinned] = useState(false);
+
+    const handlePresetChange = (e) => {
+        const p = e.target.value;
+        setPreset(p);
+        if (p !== "Custom" && PRESETS[p]) {
+            const vals = PRESETS[p];
+            if (vals.temperature !== undefined) setTemperature(vals.temperature);
+            if (vals.topP !== undefined) setTopP(vals.topP);
+            if (vals.topK !== undefined) setTopK(vals.topK);
+            if (vals.historyK !== undefined) setHistoryK(vals.historyK);
+            if (vals.retrievalK !== undefined) setRetrievalK(vals.retrievalK);
+        }
+    };
 
     return (
         <div
@@ -90,7 +113,16 @@ export default function HistorySidebar({
                     <div className="h-[1px] bg-[#2a303f] mb-4 w-[calc(100%+40px)] -ml-5" />
 
                     <div>
-                        <label className="block text-[#8ba0af] text-[13px] tracking-wider mb-5 font-mono">GENERATION PARAMETERS</label>
+                        <div className="flex justify-between items-center mb-5">
+                            <label className="text-[#8ba0af] text-[13px] tracking-wider font-mono m-0">GENERATION PARAMETERS</label>
+                            <select 
+                                value={preset} 
+                                onChange={handlePresetChange}
+                                className="bg-[rgba(30,35,45,0.4)] border border-[#3b4154] text-[#8ba0af] rounded px-2 py-0.5 text-[11px] font-mono outline-none cursor-pointer"
+                            >
+                                {Object.keys(PRESETS).map(p => <option key={p} value={p}>{p}</option>)}
+                            </select>
+                        </div>
 
                         <div className="mb-4 relative">
                             <div className="flex justify-between items-center mb-0">
@@ -101,7 +133,7 @@ export default function HistorySidebar({
                                 type="range"
                                 min="0" max="2" step="0.1"
                                 value={temperature}
-                                onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                                onChange={(e) => { setTemperature(parseFloat(e.target.value)); if (preset !== 'Custom') setPreset('Custom'); }}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-3"
                                 style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(temperature / 2) * 100}%, #2a303f ${(temperature / 2) * 100}%)` }}
                             />
@@ -119,7 +151,7 @@ export default function HistorySidebar({
                                 type="range"
                                 min="1" max="20" step="1"
                                 value={retrievalK}
-                                onChange={(e) => setRetrievalK(parseInt(e.target.value, 10))}
+                                onChange={(e) => { setRetrievalK(parseInt(e.target.value, 10)); if (preset !== 'Custom') setPreset('Custom'); }}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-2"
                                 style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(retrievalK / 20) * 100}%, #2a303f ${(retrievalK / 20) * 100}%)` }}
                             />
@@ -138,7 +170,7 @@ export default function HistorySidebar({
                                 type="range"
                                 min="0" max="50" step="2"
                                 value={historyK}
-                                onChange={(e) => setHistoryK(parseInt(e.target.value, 10))}
+                                onChange={(e) => { setHistoryK(parseInt(e.target.value, 10)); if (preset !== 'Custom') setPreset('Custom'); }}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-2"
                                 style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(historyK / 50) * 100}%, #2a303f ${(historyK / 50) * 100}%)` }}
                             />
@@ -156,7 +188,7 @@ export default function HistorySidebar({
                                 type="range"
                                 min="0" max="100" step="1"
                                 value={topK}
-                                onChange={(e) => setTopK(parseInt(e.target.value, 10))}
+                                onChange={(e) => { setTopK(parseInt(e.target.value, 10)); if (preset !== 'Custom') setPreset('Custom'); }}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-2"
                                 style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(topK / 100) * 100}%, #2a303f ${(topK / 100) * 100}%)` }}
                             />
@@ -171,7 +203,7 @@ export default function HistorySidebar({
                                 type="range"
                                 min="0" max="1" step="0.1"
                                 value={topP}
-                                onChange={(e) => setTopP(parseFloat(e.target.value))}
+                                onChange={(e) => { setTopP(parseFloat(e.target.value)); if (preset !== 'Custom') setPreset('Custom'); }}
                                 className="w-full h-0.5 bg-[#2a303f] rounded-lg appearance-none cursor-pointer accent-[rgb(3,145,147)] mt-3"
                                 style={{ background: `linear-gradient(to right, rgba(3, 145, 147, 0.8) ${(topP / 1) * 100}%, #2a303f ${(topP / 1) * 100}%)` }}
                             />

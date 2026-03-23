@@ -47,6 +47,7 @@ export default function ChatMAX() {
     const [uploadedFile, setUploadedFile] = useState(null);
 
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
+    const [preset, setPreset] = useState('Balanced'); // NEW
     const [temperature, setTemperature] = useState(0.7);
     const [topK, setTopK] = useState(40);
     const [retrievalK, setRetrievalK] = useState(5);
@@ -102,6 +103,7 @@ export default function ChatMAX() {
         if (!activeConvId || isLoadingConv.current) return;
         const timer = setTimeout(() => {
             updateSettings(activeConvId, {
+                preset, // NEW
                 system_prompt: systemPrompt,
                 temperature,
                 top_k: topK,
@@ -117,7 +119,7 @@ export default function ChatMAX() {
             }).catch(err => console.error('Failed to save settings:', err));
         }, 500);
         return () => clearTimeout(timer);
-    }, [activeConvId, systemPrompt, temperature, topK, retrievalK, historyK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
+    }, [activeConvId, preset, systemPrompt, temperature, topK, retrievalK, historyK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
 
     const loadConversation = async (convId) => {
         try {
@@ -127,6 +129,8 @@ export default function ChatMAX() {
             setActiveConvId(convId);
 
             const s = conv.settings || {};
+            if (s.preset != null) setPreset(s.preset);
+            else setPreset('Custom'); // Default to custom for old conversations
             if (s.system_prompt != null) setSystemPrompt(s.system_prompt);
             if (s.temperature != null) setTemperature(s.temperature);
             if (s.top_k != null) setTopK(s.top_k);
@@ -152,6 +156,7 @@ export default function ChatMAX() {
         setInputValue('');
         setUploadedFile(null);
         setSystemPrompt('You are a concise chat assistant.');
+        setPreset('Balanced');
         setTemperature(0.7);
         setTopK(40);
         setRetrievalK(5);
@@ -461,6 +466,8 @@ export default function ChatMAX() {
                 uploadedFile={uploadedFile}
                 systemPrompt={systemPrompt}
                 setSystemPrompt={setSystemPrompt}
+                preset={preset}
+                setPreset={setPreset}
                 temperature={temperature}
                 setTemperature={setTemperature}
                 topK={topK}

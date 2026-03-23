@@ -16,6 +16,7 @@ class ChatRequest(BaseModel):
     max_tokens: Optional[int] = 800
 
 class SettingsUpdate(BaseModel):
+    preset: Optional[str] = None
     system_prompt: Optional[str] = None
     temperature: Optional[float] = None
     top_k: Optional[int] = None
