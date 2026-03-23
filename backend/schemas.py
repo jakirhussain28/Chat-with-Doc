@@ -26,6 +26,6 @@ class SettingsUpdate(BaseModel):
     max_tokens: Optional[int] = None
     chunk_size: Optional[int] = None
     chunk_overlap: Optional[int] = None
-    uploaded_file: Optional[str] = None
+    uploaded_files: Optional[list[str]] = None
     gen_llm: Optional[str] = None
     embed_llm: Optional[str] = None

@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 
 from database import conversations_col
-from rag_engine import process_document, delete_vector_collection
+from rag_engine import process_document
 
 router = APIRouter(prefix="/api/upload", tags=["Upload"])
 
@@ -26,10 +26,6 @@ async def upload_document(
         }
         res = await conversations_col.insert_one(conv)
         conversation_id = str(res.inserted_id)
-    else:
-        # EXISTING CHAT: Purge the old document's vectors before embedding the new one
-        collection_name = f"conv_{conversation_id}"
-        delete_vector_collection(collection_name)
 
     # Process and Embed the Document
     collection_name = f"conv_{conversation_id}"

@@ -44,7 +44,7 @@ export default function ChatMAX() {
 
     const [genLLM, setGenLLM] = useState(() => localStorage.getItem('genLLM') || '');
     const [embedLLM, setEmbedLLM] = useState(() => localStorage.getItem('embedLLM') || '');
-    const [uploadedFile, setUploadedFile] = useState(null);
+    const [uploadedFiles, setUploadedFiles] = useState([]);
 
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
     const [preset, setPreset] = useState('Balanced'); // NEW
@@ -113,13 +113,13 @@ export default function ChatMAX() {
                 max_tokens: parseInt(maxTokens, 10) || 800,
                 chunk_size: parseInt(chunkSize, 10) || 512,
                 chunk_overlap: parseInt(chunkOverlap, 10) || 50,
-                uploaded_file: uploadedFile || null,
+                uploaded_files: uploadedFiles,
                 gen_llm: genLLM || null,
                 embed_llm: embedLLM || null,
             }).catch(err => console.error('Failed to save settings:', err));
         }, 500);
         return () => clearTimeout(timer);
-    }, [activeConvId, preset, systemPrompt, temperature, topK, retrievalK, historyK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFile, genLLM, embedLLM]);
+    }, [activeConvId, preset, systemPrompt, temperature, topK, retrievalK, historyK, topP, maxTokens, chunkSize, chunkOverlap, uploadedFiles, genLLM, embedLLM]);
 
     const loadConversation = async (convId) => {
         try {
@@ -140,7 +140,7 @@ export default function ChatMAX() {
             if (s.max_tokens != null) setMaxTokens(String(s.max_tokens));
             if (s.chunk_size != null) setChunkSize(s.chunk_size);
             if (s.chunk_overlap != null) setChunkOverlap(s.chunk_overlap);
-            setUploadedFile(s.uploaded_file || null);
+            setUploadedFiles(s.uploaded_files || (s.uploaded_file ? [s.uploaded_file] : []));
             if (s.gen_llm != null) setGenLLM(s.gen_llm);
             if (s.embed_llm != null) setEmbedLLM(s.embed_llm);
         } catch (e) {
@@ -154,7 +154,7 @@ export default function ChatMAX() {
         setMessages([]);
         setActiveConvId(null);
         setInputValue('');
-        setUploadedFile(null);
+        setUploadedFiles([]);
         setSystemPrompt('You are a concise chat assistant.');
         setPreset('Balanced');
         setTemperature(0.7);
@@ -183,7 +183,7 @@ export default function ChatMAX() {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
 
-            if (uploadedFile === file.name) {
+            if (uploadedFiles.includes(file.name)) {
                 setDuplicateFileName(file.name);
                 setShowDuplicateAlert(true);
                 setTimeout(() => setShowDuplicateAlert(false), 3000);
@@ -201,7 +201,7 @@ export default function ChatMAX() {
             setIsUploading(true);
             try {
                 const res = await uploadDocument(file, activeConvId, chunkSize, chunkOverlap, embedLLM);
-                setUploadedFile(file.name);
+                setUploadedFiles(prev => [...prev, file.name]);
                 setHistoryOpen(true);
 
                 if (res.conversation_id && !activeConvId) {
@@ -211,7 +211,6 @@ export default function ChatMAX() {
             } catch (err) {
                 console.error("Upload failed", err);
                 alert("Failed to process document.");
-                setUploadedFile(null);
             } finally {
                 setIsUploading(false);
                 e.target.value = null;
@@ -229,7 +228,7 @@ export default function ChatMAX() {
             return;
         }
 
-        if (uploadedFile && !embedLLM) {
+        if (uploadedFiles.length > 0 && !embedLLM) {
             setShowEmbedAlert(true);
             setTimeout(() => setShowEmbedAlert(false), 3000);
             return;
@@ -253,7 +252,7 @@ export default function ChatMAX() {
             };
 
             const response = await sendChatMessage(
-                trimmed, 'default_user', activeConvId, genLLM, (uploadedFile ? embedLLM : null), systemPrompt, options
+                trimmed, 'default_user', activeConvId, genLLM, (uploadedFiles.length > 0 ? embedLLM : null), systemPrompt, options
             );
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
@@ -360,7 +359,7 @@ export default function ChatMAX() {
 
                             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-6">
                                 <div className="flex flex-col gap-4">
-                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-xl flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
+                                    <div className="relative w-full h-[90px] bg-[#222222] hover:bg-[#2a2a2a] rounded-md flex items-center justify-center border border-gray-700/50 transition-colors shadow-sm cursor-pointer group overflow-hidden">
                                         <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${genLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
                                             }`}>Generation LLM</span>
                                         <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${genLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
@@ -377,12 +376,12 @@ export default function ChatMAX() {
                                         </select>
                                     </div>
 
-                                    <div className={`relative w-full h-[90px] rounded-xl flex items-center justify-center border transition-colors shadow-sm overflow-hidden ${uploadedFile ? 'bg-[#222222] border-gray-700/50 opacity-40 cursor-not-allowed' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50 cursor-pointer group'}`}>
+                                    <div className={`relative w-full h-[90px] rounded-md flex items-center justify-center border transition-colors shadow-sm overflow-hidden ${uploadedFiles.length > 0 ? 'bg-[#222222] border-gray-700/50 opacity-40 cursor-not-allowed' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50 cursor-pointer group'}`}>
                                         <span className={`absolute transition-all duration-300 ease-out tracking-wide group-hover:text-gray-300 ${embedLLM ? 'top-2.5 text-xl font-normal text-gray-400' : 'top-1/2 -translate-y-1/2 text-base font-thin text-gray-400'
                                             }`}>Embedding LLM</span>
                                         <span className={`absolute bottom-3 text-[15px] text-gray-500 transition-all duration-300 ease-out ${embedLLM ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
                                             }`}>{embedLLM}</span>
-                                        {!uploadedFile && (
+                                        {uploadedFiles.length === 0 && (
                                             <select
                                                 value={embedLLM}
                                                 onChange={e => setEmbedLLM(e.target.value)}
@@ -401,7 +400,7 @@ export default function ChatMAX() {
                                     <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.docx,.csv" />
                                     <div
                                         onClick={handleFileClick}
-                                        className={`relative w-full h-full rounded-xl flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${isUploading ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
+                                        className={`relative w-full h-full rounded-md flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${isUploading ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
                                             }`}
                                     >
                                         <div className="flex gap-4 items-start">
@@ -412,7 +411,7 @@ export default function ChatMAX() {
                                         </div>
                                         <div className="absolute bottom-6 left-0 right-0 text-center">
                                             <span className="text-sm text-gray-500 font-thin tracking-wide">
-                                                {uploadedFile || 'Select PDF, Doc, Text, CSV'}
+                                                {uploadedFiles.length > 0 ? `${uploadedFiles.length} file(s) attached` : 'Select PDF, Doc, Text, CSV'}
                                             </span>
                                         </div>
                                     </div>
@@ -463,7 +462,7 @@ export default function ChatMAX() {
                 onNewChat={handleNewChat}
                 isOpen={historyOpen}
                 onToggle={() => setHistoryOpen(o => !o)}
-                uploadedFile={uploadedFile}
+                uploadedFiles={uploadedFiles}
                 systemPrompt={systemPrompt}
                 setSystemPrompt={setSystemPrompt}
                 preset={preset}

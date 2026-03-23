@@ -12,7 +12,7 @@ export const PRESETS = {
 };
 
 export default function HistorySidebar({
-    conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFile,
+    conversations, activeId, onSelect, onDelete, onNewChat, isOpen, onToggle, uploadedFiles,
     systemPrompt, setSystemPrompt,
     preset, setPreset, // NEW
     temperature, setTemperature,
@@ -59,10 +59,11 @@ export default function HistorySidebar({
                         />
                     </div>
                     <span
-                        className="px-4 py-2 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors truncate max-w-full flex-1"
+                        className="px-4 py-2 text-center text-gray-500 text-xs whitespace-nowrap cursor-pointer hover:text-gray-300 transition-colors max-w-full flex-1 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden inline-block"
+                        title={uploadedFiles?.join('\n')}
                         onClick={() => document.getElementById('chat-file-input')?.click()}
                     >
-                        {uploadedFile || 'No File Selected'}
+                        {uploadedFiles?.length > 0 ? uploadedFiles.join(', ') : 'No File Selected'}
                     </span>
                 </div>
 
@@ -70,7 +71,7 @@ export default function HistorySidebar({
 
                 <div className={`flex-1 overflow-y-auto px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
-                    <div className={`flex items-center gap-4 mb-4 ${uploadedFile ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <div className={`flex items-center gap-4 mb-4 ${uploadedFiles?.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                         <div className="flex-1">
                             <label className="block text-[#8ba0af] text-[12px] mb-1.5 font-mono whitespace-nowrap">Chunk Size</label>
                             <input
@@ -78,7 +79,7 @@ export default function HistorySidebar({
                                 placeholder="512"
                                 value={chunkSize}
                                 onChange={(e) => setChunkSize(e.target.value)}
-                                disabled={!!uploadedFile}
+                                disabled={uploadedFiles?.length > 0}
                                 className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed text-center"
                             />
                         </div>
@@ -92,7 +93,7 @@ export default function HistorySidebar({
                                 placeholder="50"
                                 value={chunkOverlap}
                                 onChange={(e) => setChunkOverlap(e.target.value)}
-                                disabled={!!uploadedFile}
+                                disabled={uploadedFiles?.length > 0}
                                 className="w-full bg-[rgba(30,35,45,0.4)] border border-[#3b4154] rounded-lg px-3 py-2 text-sm text-gray-300 font-mono placeholder-[#526071] focus:outline-none focus:border-[#4b5563] disabled:cursor-not-allowed text-center"
                             />
                         </div>
@@ -115,10 +116,10 @@ export default function HistorySidebar({
                     <div>
                         <div className="flex justify-between items-center mb-5">
                             <label className="text-[#8ba0af] text-[13px] tracking-wider font-mono m-0">GENERATION PARAMETERS</label>
-                            <select 
-                                value={preset} 
+                            <select
+                                value={preset}
                                 onChange={handlePresetChange}
-                                className="bg-[rgba(30,35,45,0.4)] border border-[#3b4154] text-[#8ba0af] rounded px-2 py-0.5 text-[11px] font-mono outline-none cursor-pointer"
+                                className="bg-[rgba(30,35,45,0.4)] border border-[#3b4154] text-[#8ba0af] rounded px-0.5 py-0.5 text-[11px] font-mono outline-none cursor-pointer"
                             >
                                 {Object.keys(PRESETS).map(p => <option key={p} value={p}>{p}</option>)}
                             </select>
