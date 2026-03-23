@@ -58,6 +58,8 @@ export default function ChatMAX() {
 
     const [showLlmAlert, setShowLlmAlert] = useState(false);
     const [showEmbedAlert, setShowEmbedAlert] = useState(false);
+    const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
+    const [duplicateFileName, setDuplicateFileName] = useState('');
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
@@ -175,6 +177,14 @@ export default function ChatMAX() {
     const handleFileChange = async (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
+
+            if (uploadedFile === file.name) {
+                setDuplicateFileName(file.name);
+                setShowDuplicateAlert(true);
+                setTimeout(() => setShowDuplicateAlert(false), 3000);
+                e.target.value = null;
+                return;
+            }
 
             if (!embedLLM) {
                 setShowEmbedAlert(true);
@@ -327,6 +337,12 @@ export default function ChatMAX() {
             {showEmbedAlert && (
                 <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
                     <span className="font-medium text-sm tracking-wide">Please select an Embedding LLM for RAG Chat</span>
+                </div>
+            )}
+
+            {showDuplicateAlert && (
+                <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 bg-grey-300/10 border border-amber-500/50 text-amber-600 px-5 py-2.5 rounded-lg shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-5 duration-300 pointer-events-none">
+                    <span className="font-medium text-sm tracking-wide">You already uploaded a file named {duplicateFileName}.</span>
                 </div>
             )}
 
