@@ -177,44 +177,76 @@ export default function ChatMAX() {
         }
     };
 
-    const handleFileClick = () => document.getElementById('chat-file-input')?.click();
+    const handleFileClick = () => {
+        if (isUploading) return;
+        document.getElementById('chat-file-input')?.click();
+    };
 
     const handleFileChange = async (e) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
+        if (!e.target.files || e.target.files.length === 0 || isUploading) return;
 
-            if (uploadedFiles.includes(file.name)) {
+        if (!embedLLM) {
+            setShowEmbedAlert(true);
+            setTimeout(() => setShowEmbedAlert(false), 3000);
+            e.target.value = null;
+            return;
+        }
+
+        const files = Array.from(e.target.files);
+
+        // 1. Analyze and eliminate duplicates before processing (Fixes state closure race condition)
+        const uniqueFiles = [];
+        const seenNames = new Set(uploadedFiles);
+
+        for (const file of files) {
+            if (seenNames.has(file.name)) {
                 setDuplicateFileName(file.name);
                 setShowDuplicateAlert(true);
                 setTimeout(() => setShowDuplicateAlert(false), 3000);
-                e.target.value = null;
-                return;
+            } else {
+                seenNames.add(file.name);
+                uniqueFiles.push(file);
             }
+        }
 
-            if (!embedLLM) {
-                setShowEmbedAlert(true);
-                setTimeout(() => setShowEmbedAlert(false), 3000);
-                e.target.value = null;
-                return;
-            }
+        if (uniqueFiles.length === 0) {
+            e.target.value = null;
+            return;
+        }
 
-            setIsUploading(true);
-            try {
-                const res = await uploadDocument(file, activeConvId, chunkSize, chunkOverlap, embedLLM);
-                setUploadedFiles(prev => [...prev, file.name]);
-                setHistoryOpen(true);
+        setIsUploading(true);
 
-                if (res.conversation_id && !activeConvId) {
-                    setActiveConvId(res.conversation_id);
-                    loadConversations();
+        try {
+            let currentConvId = activeConvId;
+
+            // 2. Process sequentially to prevent backend SQLite locks and memory bursts 
+            for (const file of uniqueFiles) {
+                const res = await uploadDocument(file, currentConvId, chunkSize, chunkOverlap, embedLLM);
+
+                // Functional state update ensures UI updates correctly
+                setUploadedFiles(prev => {
+                    if (!prev.includes(file.name)) return [...prev, file.name];
+                    return prev;
+                });
+
+                if (res.conversation_id && !currentConvId) {
+                    currentConvId = res.conversation_id;
+                    setActiveConvId(currentConvId);
                 }
-            } catch (err) {
-                console.error("Upload failed", err);
-                alert("Failed to process document.");
-            } finally {
-                setIsUploading(false);
-                e.target.value = null;
             }
+
+            // 3. Optimize: Refresh the sidebar list only once at the end
+            if (!activeConvId && currentConvId) {
+                loadConversations();
+            }
+
+            setHistoryOpen(true);
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("Failed to process one or more documents.");
+        } finally {
+            setIsUploading(false);
+            e.target.value = null;
         }
     };
 
@@ -397,7 +429,7 @@ export default function ChatMAX() {
                                 </div>
 
                                 <div className="h-full">
-                                    <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.docx,.csv" />
+                                    <input id="chat-file-input" type="file" className="hidden" onChange={handleFileChange} accept=".pdf,.txt,.doc,.docx,.csv" multiple />
                                     <div
                                         onClick={handleFileClick}
                                         className={`relative w-full h-full rounded-md flex flex-col p-6 border transition-colors cursor-pointer group shadow-sm ${isUploading ? 'bg-slate-800 border-indigo-500/50 animate-pulse cursor-wait' : 'bg-[#222222] hover:bg-[#2a2a2a] border-gray-700/50'
