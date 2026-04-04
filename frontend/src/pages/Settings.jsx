@@ -7,7 +7,7 @@ export const PRESETS = {
     "Precise": { temperature: 0.2, topP: 0.5, topK: 10, historyK: 4, retrievalK: 3 },
     "Balanced": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 8, retrievalK: 5 },
     "Creative": { temperature: 0.9, topP: 0.95, topK: 60, historyK: 10, retrievalK: 7 },
-    "Max Context": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 30, retrievalK: 15 },
+    "Max Context": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 30, retrievalK: 20 },
     "Custom": {}
 };
 
@@ -63,13 +63,13 @@ export default function HistorySidebar({
                         title={uploadedFiles?.join('\n')}
                         onClick={() => document.getElementById('chat-file-input')?.click()}
                     >
-                        {uploadedFiles?.length > 0 ? uploadedFiles.join(', ') : 'No File Selected'}
+                        {uploadedFiles?.length > 0 ? uploadedFiles.join('\u2003') : 'No File Selected'}
                     </span>
                 </div>
 
                 <div className={`h-[1px] bg-[rgb(65,60,75)] mx-[10px] mb-1 flex-shrink-0 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`} />
 
-                <div className={`flex-1 overflow-y-auto px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                <div className={`flex-1  overflow-y-auto overflow-x-hidden px-5 pt-3 pb-5 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
 
                     <div className={`flex items-center gap-4 mb-4 ${uploadedFiles?.length > 0 ? 'opacity-40 pointer-events-none' : ''}`}>
                         <div className="flex-1">

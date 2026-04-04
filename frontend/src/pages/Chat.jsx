@@ -252,7 +252,7 @@ export default function ChatMAX() {
 
     const handleSend = async () => {
         const trimmed = inputValue.trim();
-        if (!trimmed || isStreaming) return;
+        if (!trimmed || isStreaming || isUploading) return;
 
         if (!genLLM) {
             setShowLlmAlert(true);
