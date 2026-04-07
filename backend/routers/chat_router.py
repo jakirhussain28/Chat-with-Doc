@@ -14,7 +14,6 @@ router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
 @router.post("")
 async def chat_endpoint(req: ChatRequest):
-    # Fetch latest config for Ollama URL in case it changed
     current_config = load_profile_config()
     ollama_base_url = current_config.get("ollama_url_local", "http://localhost:11434")
 
@@ -44,6 +43,16 @@ async def chat_endpoint(req: ChatRequest):
         }
     )
 
+    # Update placeholder title with the first real message
+    if conv.get("title") in (None, "New Chat"):
+        prefix = "Doc: " if req.embed_model else ""
+        truncated = req.message[:25] + "..." if len(req.message) > 25 else req.message
+        new_title = f"{prefix}{truncated}"
+        await conversations_col.update_one(
+            {"_id": ObjectId(conv_id_str)},
+            {"$set": {"title": new_title}}
+        )
+
     # Hardened memory slicing logic
     past_messages = conv.get("messages", [])
     if req.history_k is not None:
@@ -66,7 +75,12 @@ async def chat_endpoint(req: ChatRequest):
         context = await query_context(req.message, collection_name, req.embed_model, retrieval_k=req.retrieval_k)
         
         if context:
-            rag_instruction = f"Context information is below.\n---------------------\n{context}\n---------------------\nGiven the context information, answer the user's question."
+            rag_instruction = (
+                f"Context information is below. Each context chunk is tagged with its source file and page number.\n"
+                f"---------------------\n{context}\n---------------------\n"
+                f"Given the context information, answer the user's question. "
+                f"When relevant, cite the source file name and page number(s) where the information was found."
+            )
             messages_history.insert(-1, {"role": "system", "content": rag_instruction})
 
     if req.system_prompt and req.system_prompt.strip():

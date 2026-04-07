@@ -5,7 +5,7 @@ import { GiSettingsKnobs } from "react-icons/gi";
 
 export const PRESETS = {
     "Precise": { temperature: 0.2, topP: 0.5, topK: 10, historyK: 4, retrievalK: 3 },
-    "Balanced": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 8, retrievalK: 5 },
+    "Balanced": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 8, retrievalK: 10 },
     "Creative": { temperature: 0.9, topP: 0.95, topK: 60, historyK: 10, retrievalK: 7 },
     "Max Context": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 30, retrievalK: 20 },
     "Custom": {}

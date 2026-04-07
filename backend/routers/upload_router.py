@@ -18,7 +18,7 @@ async def upload_document(
     if not conversation_id or conversation_id == "null":
         conv = {
             "user_id": "default_user", 
-            "title": f"Doc: {file.filename[:20]}",
+            "title": "New Chat",
             "messages": [],
             "settings": {},
             "created_at": datetime.utcnow(),

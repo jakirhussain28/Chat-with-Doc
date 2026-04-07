@@ -70,6 +70,8 @@ async def process_document(
 
         for chunk in chunks:
             chunk.metadata["source"] = filename
+            if "page" in chunk.metadata:
+                chunk.metadata["page"] = chunk.metadata["page"] + 1
 
         embeddings = get_embedding_model(embed_model)
         
@@ -86,7 +88,6 @@ async def process_document(
         if os.path.exists(temp_filepath):
             os.remove(temp_filepath)
 
-# UPDATED: Changed top_k to retrieval_k and default to 5
 async def query_context(query: str, collection_name: str, embed_model: str, retrieval_k: int = 5) -> str:
     """Retrieves relevant context from ChromaDB using Langchain."""
     embeddings = get_embedding_model(embed_model)
@@ -98,13 +99,18 @@ async def query_context(query: str, collection_name: str, embed_model: str, retr
     )
     
     try:
-        # UPDATED: Pass retrieval_k to the similarity_search k parameter
         docs = vectorstore.similarity_search(query, k=retrieval_k)
         
         if not docs:
             return ""
         
-        return "\n\n---\n\n".join([doc.page_content for doc in docs])
+        context_parts = []
+        for doc in docs:
+            source = doc.metadata.get("source", "Unknown")
+            page = doc.metadata.get("page", None)
+            header = f"[Source: {source}, Page: {page}]" if page else f"[Source: {source}]"
+            context_parts.append(f"{header}\n{doc.page_content}")
+        return "\n\n---\n\n".join(context_parts)
         
     except Exception as e:
         print(f"Error querying Chroma via Langchain: {e}")
