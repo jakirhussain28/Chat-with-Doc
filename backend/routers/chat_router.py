@@ -43,6 +43,16 @@ async def chat_endpoint(req: ChatRequest):
         }
     )
 
+    # Update placeholder title with the first real message
+    if conv.get("title") in (None, "New Chat"):
+        prefix = "Doc: " if req.embed_model else ""
+        truncated = req.message[:25] + "..." if len(req.message) > 25 else req.message
+        new_title = f"{prefix}{truncated}"
+        await conversations_col.update_one(
+            {"_id": ObjectId(conv_id_str)},
+            {"$set": {"title": new_title}}
+        )
+
     # Hardened memory slicing logic
     past_messages = conv.get("messages", [])
     if req.history_k is not None:
