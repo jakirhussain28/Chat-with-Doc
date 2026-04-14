@@ -76,7 +76,7 @@ export default function HistorySidebar({
                             <label className="block text-[#8ba0af] text-[12px] mb-1.5 font-mono whitespace-nowrap">Chunk Size</label>
                             <input
                                 type="text"
-                                placeholder="512"
+                                placeholder="1024"
                                 value={chunkSize}
                                 onChange={(e) => setChunkSize(e.target.value)}
                                 disabled={uploadedFiles?.length > 0}

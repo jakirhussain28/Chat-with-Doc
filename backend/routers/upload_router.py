@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/upload", tags=["Upload"])
 async def upload_document(
     file: UploadFile = File(...),
     conversation_id: Optional[str] = Form(None),
-    chunk_size: int = Form(512),
+    chunk_size: int = Form(1024),
     chunk_overlap: int = Form(50),
     embed_model: str = Form(...)
 ):

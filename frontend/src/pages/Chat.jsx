@@ -54,7 +54,7 @@ export default function ChatMAX() {
     const [historyK, setHistoryK] = useState(8); // NEW
     const [topP, setTopP] = useState(0.8);
     const [maxTokens, setMaxTokens] = useState('800');
-    const [chunkSize, setChunkSize] = useState(512);
+    const [chunkSize, setChunkSize] = useState(1024);
     const [chunkOverlap, setChunkOverlap] = useState(50);
 
     const [showLlmAlert, setShowLlmAlert] = useState(false);
@@ -111,7 +111,7 @@ export default function ChatMAX() {
                 history_k: historyK, // NEW
                 top_p: topP,
                 max_tokens: parseInt(maxTokens, 10) || 800,
-                chunk_size: parseInt(chunkSize, 10) || 512,
+                chunk_size: parseInt(chunkSize, 10) || 1024,
                 chunk_overlap: parseInt(chunkOverlap, 10) || 50,
                 uploaded_files: uploadedFiles,
                 gen_llm: genLLM || null,
@@ -163,7 +163,7 @@ export default function ChatMAX() {
         setHistoryK(8); // NEW
         setTopP(0.8);
         setMaxTokens('800');
-        setChunkSize(512);
+        setChunkSize(1024);
         setChunkOverlap(50);
     };
 
