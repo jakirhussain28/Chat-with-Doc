@@ -8,7 +8,7 @@ import httpx
 from schemas import ChatRequest
 from database import conversations_col
 from config import load_profile_config
-from rag_engine import query_context
+from rag_engine import hybrid_search
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
@@ -57,12 +57,9 @@ async def chat_endpoint(req: ChatRequest):
     past_messages = conv.get("messages", [])
     if req.history_k is not None:
         if req.history_k > 0:
-            # 1. Force the number to be even (e.g., 5 becomes 4) to maintain pairs
             effective_k = req.history_k - (req.history_k % 2)
             past_messages = past_messages[-effective_k:] if effective_k > 0 else []
             
-            # 2. Failsafe: Ensure the sliced history strictly starts with a 'user' role
-            # (In case the database had a failed generation and left an orphaned message)
             if past_messages and past_messages[0].get("role") == "assistant":
                 past_messages = past_messages[1:]
         else:
@@ -72,14 +69,21 @@ async def chat_endpoint(req: ChatRequest):
 
     if req.embed_model:
         collection_name = f"conv_{conv_id_str}"
-        context = await query_context(req.message, collection_name, req.embed_model, retrieval_k=req.retrieval_k)
+        
+        # Replaced standard query with Hybrid Search
+        context = await hybrid_search(
+            query=req.message, 
+            collection_name=collection_name, 
+            embed_model=req.embed_model, 
+            retrieval_k=req.retrieval_k
+        )
         
         if context:
             rag_instruction = (
-                f"Context information is below. Each context chunk is tagged with its source file and page number.\n"
+                f"Context information is below. Each context chunk is tagged with its source file and location (page for documents, row for CSVs, line for text files).\n"
                 f"---------------------\n{context}\n---------------------\n"
                 f"Given the context information, answer the user's question. "
-                f"When relevant, cite the source file name and page number(s) where the information was found."
+                # f"When relevant, cite the source file name and location (page, row, or line) where the information was found."
             )
             messages_history.insert(-1, {"role": "system", "content": rag_instruction})
 
