@@ -5,9 +5,9 @@ import { GiSettingsKnobs } from "react-icons/gi";
 
 export const PRESETS = {
     "Precise": { temperature: 0.2, topP: 0.5, topK: 10, historyK: 4, retrievalK: 3 },
-    "Balanced": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 8, retrievalK: 10 },
+    // "Balanced": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 6, retrievalK: 10 },
     "Creative": { temperature: 0.9, topP: 0.95, topK: 60, historyK: 10, retrievalK: 7 },
-    "Max Context": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 30, retrievalK: 20 },
+    "Max Content": { temperature: 0.7, topP: 0.8, topK: 40, historyK: 8, retrievalK: 20 },
     "Custom": {}
 };
 
@@ -76,7 +76,7 @@ export default function HistorySidebar({
                             <label className="block text-[#8ba0af] text-[12px] mb-1.5 font-mono whitespace-nowrap">Chunk Size</label>
                             <input
                                 type="text"
-                                placeholder="512"
+                                placeholder="1024"
                                 value={chunkSize}
                                 onChange={(e) => setChunkSize(e.target.value)}
                                 disabled={uploadedFiles?.length > 0}

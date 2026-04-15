@@ -47,14 +47,14 @@ export default function ChatMAX() {
     const [uploadedFiles, setUploadedFiles] = useState([]);
 
     const [systemPrompt, setSystemPrompt] = useState('You are a concise chat assistant.');
-    const [preset, setPreset] = useState('Balanced'); // NEW
+    const [preset, setPreset] = useState('Max Content');
     const [temperature, setTemperature] = useState(0.7);
     const [topK, setTopK] = useState(40);
-    const [retrievalK, setRetrievalK] = useState(10);
-    const [historyK, setHistoryK] = useState(8); // NEW
+    const [retrievalK, setRetrievalK] = useState(20);
+    const [historyK, setHistoryK] = useState(8);
     const [topP, setTopP] = useState(0.8);
     const [maxTokens, setMaxTokens] = useState('800');
-    const [chunkSize, setChunkSize] = useState(512);
+    const [chunkSize, setChunkSize] = useState(1024);
     const [chunkOverlap, setChunkOverlap] = useState(50);
 
     const [showLlmAlert, setShowLlmAlert] = useState(false);
@@ -111,7 +111,7 @@ export default function ChatMAX() {
                 history_k: historyK, // NEW
                 top_p: topP,
                 max_tokens: parseInt(maxTokens, 10) || 800,
-                chunk_size: parseInt(chunkSize, 10) || 512,
+                chunk_size: parseInt(chunkSize, 10) || 1024,
                 chunk_overlap: parseInt(chunkOverlap, 10) || 50,
                 uploaded_files: uploadedFiles,
                 gen_llm: genLLM || null,
@@ -156,14 +156,14 @@ export default function ChatMAX() {
         setInputValue('');
         setUploadedFiles([]);
         setSystemPrompt('You are a concise chat assistant.');
-        setPreset('Balanced');
+        setPreset('Max Content');
         setTemperature(0.7);
         setTopK(40);
-        setRetrievalK(10);
+        setRetrievalK(20);
         setHistoryK(8); // NEW
         setTopP(0.8);
         setMaxTokens('800');
-        setChunkSize(512);
+        setChunkSize(1024);
         setChunkOverlap(50);
     };
 
