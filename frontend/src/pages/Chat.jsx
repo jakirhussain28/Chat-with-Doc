@@ -10,14 +10,17 @@ import { sendChatMessage, fetchConversations, fetchConversation, deleteConversat
 export default function ChatMAX() {
     // ─── Dynamic Config State ────────────────────────────────────────────────
     const [llmConfig, setLlmConfig] = useState({ generation_llms: [], embedding_llms: [] });
+    const [isBackendDown, setIsBackendDown] = useState(false);
 
     useEffect(() => {
         const loadConfig = async () => {
             try {
                 const data = await fetchConfig();
                 setLlmConfig(data);
+                setIsBackendDown(false);
             } catch (error) {
                 console.error("Failed to load LLM config:", error);
+                setIsBackendDown(true);
             }
         };
         loadConfig();
@@ -426,6 +429,16 @@ export default function ChatMAX() {
                                             </select>
                                         )}
                                     </div>
+                                    {isBackendDown && (
+                                        <a
+                                            href="https://github.com/jakirhussain28/Chat-with-Doc"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full py-2 bg-indigo-700/20 hover:bg-indigo-600/30 rounded-md flex items-center justify-center border border-indigo-500/40 transition-colors shadow-sm text-indigo-300 hover:text-indigo-200 text-sm font-medium"
+                                        >
+                                            Link to Backend Code on GitHub
+                                        </a>
+                                    )}
                                 </div>
 
                                 <div className="h-full">
